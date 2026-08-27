@@ -4,37 +4,81 @@ import StatusBadge from '@/Components/ui/StatusBadge';
 import AppLayout from '@/Layouts/AppLayout';
 import { formatDate, formatMoney } from '@/lib/format';
 import { Head, Link, router } from '@inertiajs/react';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
     Check,
     Clock,
     CurrencyCircleDollar,
     X,
 } from '@phosphor-icons/react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+
+const EASE = [0.32, 0.72, 0, 1];
 
 export default function Index({ advances = [] }) {
     const [busyId, setBusyId] = useState(null);
+    const [exiting, setExiting] = useState(null);
+    const [toast, setToast] = useState(null);
+    const toastTimer = useRef(null);
 
-    const handleApprove = (id) => {
-        setBusyId(id);
-        router.post(
-            route('manager.advances.approve', id),
-            {},
-            { onFinish: () => setBusyId(null) },
-        );
+    useEffect(() => {
+        return () => {
+            if (toastTimer.current) {
+                clearTimeout(toastTimer.current);
+            }
+        };
+    }, []);
+
+    const showToast = (tone, label) => {
+        if (toastTimer.current) {
+            clearTimeout(toastTimer.current);
+        }
+        setToast({ tone, label });
+        toastTimer.current = setTimeout(() => setToast(null), 2600);
     };
 
-    const handleReject = (id) => {
+    const decide = (id, decision) => {
+        if (busyId || exiting) {
+            return;
+        }
+
         setBusyId(id);
-        router.post(
-            route('manager.advances.reject', id),
-            {},
-            { onFinish: () => setBusyId(null) },
-        );
+        setExiting({ id, decision });
+
+        const routeName =
+            decision === 'approve'
+                ? 'manager.advances.approve'
+                : 'manager.advances.reject';
+
+        window.setTimeout(() => {
+            router.post(
+                route(routeName, id),
+                {},
+                {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        showToast(
+                            decision === 'approve' ? 'success' : 'danger',
+                            decision === 'approve' ? 'Одобрено' : 'Отклонено',
+                        );
+                    },
+                    onError: () => {
+                        setExiting(null);
+                    },
+                    onFinish: () => {
+                        setBusyId(null);
+                        setExiting(null);
+                    },
+                },
+            );
+        }, 320);
     };
 
-    const pending = advances.filter((a) => a.status === 'pending');
+    const pending = advances.filter(
+        (a) =>
+            a.status === 'pending' &&
+            !(exiting && exiting.id === a.id),
+    );
     const others = advances.filter((a) => a.status !== 'pending');
 
     return (
@@ -47,7 +91,7 @@ export default function Index({ advances = [] }) {
                 subtitle={`${pending.length} ожидают решения`}
             />
 
-            {pending.length === 0 && advances.length === 0 ? (
+            {pending.length === 0 && advances.length === 0 && !exiting ? (
                 <BezelCard padding="p-12">
                     <div className="text-center">
                         <CurrencyCircleDollar
@@ -60,26 +104,28 @@ export default function Index({ advances = [] }) {
                 </BezelCard>
             ) : (
                 <div className="space-y-8">
-                    {pending.length > 0 && (
+                    {(pending.length > 0 || exiting) && (
                         <section>
                             <p className="mb-4 text-[10px] font-medium uppercase tracking-[0.2em] text-[var(--muted)]">
                                 Ожидают решения
                             </p>
                             <div className="space-y-3">
-                                {pending.map((advance, i) => (
-                                    <AdvanceRow
-                                        key={advance.id}
-                                        advance={advance}
-                                        delay={i * 0.04}
-                                        busy={busyId === advance.id}
-                                        onApprove={() =>
-                                            handleApprove(advance.id)
-                                        }
-                                        onReject={() =>
-                                            handleReject(advance.id)
-                                        }
-                                    />
-                                ))}
+                                <AnimatePresence mode="popLayout">
+                                    {pending.map((advance, i) => (
+                                        <AdvanceRow
+                                            key={advance.id}
+                                            advance={advance}
+                                            delay={i * 0.04}
+                                            busy={busyId === advance.id}
+                                            onApprove={() =>
+                                                decide(advance.id, 'approve')
+                                            }
+                                            onReject={() =>
+                                                decide(advance.id, 'reject')
+                                            }
+                                        />
+                                    ))}
+                                </AnimatePresence>
                             </div>
                         </section>
                     )}
@@ -103,6 +149,48 @@ export default function Index({ advances = [] }) {
                     )}
                 </div>
             )}
+
+            <AnimatePresence>
+                {toast && (
+                    <motion.div
+                        key={toast.label}
+                        role="status"
+                        aria-live="polite"
+                        initial={{ opacity: 0, y: 28, scale: 0.94 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 16, scale: 0.96 }}
+                        transition={{ duration: 0.5, ease: EASE }}
+                        className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center px-4 pb-[max(1.25rem,calc(0.75rem+var(--safe-bottom)))]"
+                    >
+                        <div
+                            className={[
+                                'pointer-events-auto flex items-center gap-2.5 rounded-full px-5 py-3.5 shadow-lift ring-1 backdrop-blur-xl',
+                                toast.tone === 'success'
+                                    ? 'bg-[var(--ink)] text-[var(--bg)] ring-white/10'
+                                    : 'bg-[var(--ink)] text-[var(--bg)] ring-white/10',
+                            ].join(' ')}
+                        >
+                            <span
+                                className={[
+                                    'flex h-8 w-8 items-center justify-center rounded-full',
+                                    toast.tone === 'success'
+                                        ? 'bg-emerald-400/20 text-emerald-300'
+                                        : 'bg-red-400/20 text-red-300',
+                                ].join(' ')}
+                            >
+                                {toast.tone === 'success' ? (
+                                    <Check size={18} weight="light" />
+                                ) : (
+                                    <X size={18} weight="light" />
+                                )}
+                            </span>
+                            <span className="pr-1 text-sm font-semibold tracking-tight">
+                                {toast.label}
+                            </span>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </AppLayout>
     );
 }
@@ -119,9 +207,17 @@ function AdvanceRow({
 
     return (
         <motion.div
+            layout
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay, duration: 0.65, ease: [0.32, 0.72, 0, 1] }}
+            exit={{
+                opacity: 0,
+                y: -18,
+                scale: 0.97,
+                filter: 'blur(4px)',
+                transition: { duration: 0.45, ease: EASE },
+            }}
+            transition={{ delay, duration: 0.65, ease: EASE }}
         >
             <BezelCard padding="p-0" innerClassName="p-0 overflow-hidden">
                 <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:gap-5 sm:p-5">
@@ -185,26 +281,32 @@ function AdvanceRow({
 
                     {canAct ? (
                         <div className="flex shrink-0 items-center gap-2 self-end sm:self-center">
-                            <button
+                            <motion.button
                                 type="button"
                                 onClick={onApprove}
                                 disabled={busy}
                                 aria-label="Одобрить"
                                 title="Одобрить"
-                                className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-700 ring-1 ring-emerald-500/30 transition-fluid hover:bg-emerald-500/25 active:scale-[0.96] disabled:opacity-50"
+                                whileTap={{ scale: 0.9 }}
+                                whileHover={{ scale: 1.06 }}
+                                transition={{ duration: 0.35, ease: EASE }}
+                                className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-700 ring-1 ring-emerald-500/30 transition-fluid hover:bg-emerald-500/25 disabled:opacity-50"
                             >
                                 <Check size={20} weight="light" />
-                            </button>
-                            <button
+                            </motion.button>
+                            <motion.button
                                 type="button"
                                 onClick={onReject}
                                 disabled={busy}
                                 aria-label="Отклонить"
                                 title="Отклонить"
-                                className="flex h-11 w-11 items-center justify-center rounded-full bg-red-500/15 text-red-700 ring-1 ring-red-500/30 transition-fluid hover:bg-red-500/25 active:scale-[0.96] disabled:opacity-50"
+                                whileTap={{ scale: 0.9 }}
+                                whileHover={{ scale: 1.06 }}
+                                transition={{ duration: 0.35, ease: EASE }}
+                                className="flex h-11 w-11 items-center justify-center rounded-full bg-red-500/15 text-red-700 ring-1 ring-red-500/30 transition-fluid hover:bg-red-500/25 disabled:opacity-50"
                             >
                                 <X size={20} weight="light" />
-                            </button>
+                            </motion.button>
                         </div>
                     ) : (
                         <div className="hidden w-[6.25rem] shrink-0 sm:block" />
