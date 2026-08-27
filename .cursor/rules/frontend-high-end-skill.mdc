@@ -1,0 +1,41 @@
+---
+description: При любых изменениях фронтенда читать и применять skill high-end-visual-design
+globs: resources/js/**/*.{js,jsx,ts,tsx},resources/css/**/*.{css,scss},resources/views/**/*.blade.php,public/**/*.{css,js},tailwind.config.js,vite.config.js
+alwaysApply: false
+---
+
+# Frontend: обязательный high-end skill
+
+Перед **любыми** правками UI/фронтенда (компоненты, страницы, стили, layout, анимации, модалки, таблицы, навигация):
+
+1. **Сразу прочитай skill** через Read:
+   `.agents/skills/high-end-visual-design/SKILL.md`
+2. Следуй ему как обязательному гайду по визуалу — не начинай писать JSX/CSS, пока skill не загружен в контекст.
+3. Не игнорируй skill «ради скорости» и не откатывайся к дефолтному AI-UI.
+
+## Проектные ограничения (поверх skill)
+
+Этот продукт уже собран в эстетике skill. Сохраняй continuity:
+
+- **Vibe:** Soft Structuralism, но в **чёрно-белой** палитре (`--ink` / `--muted` / `--bg` / `--surface` из `resources/css/app.css`)
+- **Шрифт:** Plus Jakarta Sans (не Inter / Roboto / Arial)
+- **Иконки:** `@phosphor-icons/react`, weight `light`
+- **Карточки:** Double-Bezel через `BezelCard`
+- **Кнопки:** island / rounded-full, `transition-fluid` с `cubic-bezier(0.32,0.72,0,1)`
+- **Motion:** framer-motion fade/slide; без `linear` / `ease-in-out`
+- **Бренд:** Legions Group (`BrandLogo`), без цветных акцентов кроме Ч/Б
+- **Мобилка:** safe-area, `min-h-[100dvh]`, без горизонтального overflow
+
+## Анти-паттерны (запрещено)
+
+- Цветные статусы/кнопки (emerald/red/sky/amber и т.п.)
+- Толстые Lucide/Material/FontAwesome иконки
+- `shadow-md` / жёсткие серые бордеры
+- Sticky nav на всю ширину без floating island
+- Плейсхолдеры вида `// ...` вместо готового UI
+
+## Чеклист перед сдачей UI-изменения
+
+- [ ] Skill `high-end-visual-design` был прочитан в этом ходе
+- [ ] Сохранены BezelCard / motion / Phosphor Light / ЧБ палитра
+- [ ] Адаптив mobile не сломан

@@ -1,0 +1,40 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+final class Brigade extends Model
+{
+    protected $fillable = [
+        'name',
+        'brigadier_id',
+    ];
+
+    public function brigadier(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'brigadier_id');
+    }
+
+    public function members(): HasMany
+    {
+        return $this->hasMany(User::class);
+    }
+
+    public function workObjects(): HasMany
+    {
+        return $this->hasMany(WorkObject::class);
+    }
+
+    public function activeObject(): ?WorkObject
+    {
+        return $this->workObjects()
+            ->whereIn('status', ['active', 'planned'])
+            ->latest('start_date')
+            ->first();
+    }
+}

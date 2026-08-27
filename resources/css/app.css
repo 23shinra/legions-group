@@ -1,0 +1,154 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --bg: #f2f2f2;
+        --ink: #0a0a0a;
+        --muted: #737373;
+        --accent: #0a0a0a;
+        --accent-light: #262626;
+        --surface: #ffffff;
+        --surface-muted: #f7f7f7;
+        --bezel: rgba(10, 10, 10, 0.05);
+        --bezel-ring: rgba(10, 10, 10, 0.08);
+        --nav-glass: rgba(255, 255, 255, 0.7);
+        --overlay: rgba(0, 0, 0, 0.4);
+        --shadow-soft:
+            0 24px 64px -12px rgba(0, 0, 0, 0.08),
+            0 8px 24px -8px rgba(0, 0, 0, 0.05);
+        --shadow-lift:
+            0 32px 80px -16px rgba(0, 0, 0, 0.1),
+            0 12px 32px -10px rgba(0, 0, 0, 0.06);
+        --ease-fluid: cubic-bezier(0.32, 0.72, 0, 1);
+        --safe-top: env(safe-area-inset-top, 0px);
+        --safe-bottom: env(safe-area-inset-bottom, 0px);
+        --safe-left: env(safe-area-inset-left, 0px);
+        --safe-right: env(safe-area-inset-right, 0px);
+        color-scheme: light;
+    }
+
+    [data-theme='dark'] {
+        --bg: #0c0c0c;
+        --ink: #f5f5f5;
+        --muted: #a3a3a3;
+        --accent: #f5f5f5;
+        --accent-light: #e5e5e5;
+        --surface: #171717;
+        --surface-muted: #1f1f1f;
+        --bezel: rgba(255, 255, 255, 0.06);
+        --bezel-ring: rgba(255, 255, 255, 0.1);
+        --nav-glass: rgba(23, 23, 23, 0.75);
+        --overlay: rgba(0, 0, 0, 0.65);
+        --shadow-soft:
+            0 24px 64px -12px rgba(0, 0, 0, 0.45),
+            0 8px 24px -8px rgba(0, 0, 0, 0.35);
+        --shadow-lift:
+            0 32px 80px -16px rgba(0, 0, 0, 0.55),
+            0 12px 32px -10px rgba(0, 0, 0, 0.4);
+        color-scheme: dark;
+    }
+
+    html {
+        scroll-behavior: smooth;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+    }
+
+    html,
+    body {
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    body {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        background-color: var(--bg);
+        color: var(--ink);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        -webkit-tap-highlight-color: transparent;
+        padding-left: var(--safe-left);
+        padding-right: var(--safe-right);
+    }
+
+    body.menu-locked {
+        overflow: hidden;
+        touch-action: none;
+    }
+
+    ::selection {
+        background-color: rgba(10, 10, 10, 0.15);
+        color: var(--ink);
+    }
+
+    /* Prevent iOS zoom on focus */
+    input,
+    select,
+    textarea,
+    button {
+        font-size: 16px;
+    }
+}
+
+@layer components {
+    .shadow-soft {
+        box-shadow: var(--shadow-soft);
+    }
+
+    .shadow-lift {
+        box-shadow: var(--shadow-lift);
+    }
+
+    .transition-fluid {
+        transition-property: transform, opacity, background-color, color, box-shadow;
+        transition-duration: 700ms;
+        transition-timing-function: var(--ease-fluid);
+    }
+
+    .text-ink {
+        color: var(--ink);
+    }
+
+    .text-muted {
+        color: var(--muted);
+    }
+
+    .bg-surface {
+        background-color: var(--surface);
+    }
+
+    .bg-accent {
+        background-color: var(--accent);
+    }
+
+    .ring-bezel {
+        --tw-ring-color: var(--bezel-ring);
+    }
+
+    .input-soft {
+        @apply w-full rounded-2xl border-0 bg-[var(--surface-muted)] px-4 py-3.5 text-base text-[var(--ink)] shadow-[inset_0_1px_2px_rgba(10,10,10,0.06)] outline-none ring-1 ring-[var(--bezel-ring)] transition-fluid focus:ring-2 focus:ring-[var(--accent)];
+    }
+
+    .table-scroll {
+        @apply -mx-4 overflow-x-auto overscroll-x-contain px-4 sm:mx-0 sm:px-0;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+@layer utilities {
+    .ease-fluid {
+        transition-timing-function: var(--ease-fluid);
+    }
+
+    .pb-safe {
+        padding-bottom: calc(1rem + var(--safe-bottom));
+    }
+
+    .pt-safe {
+        padding-top: var(--safe-top);
+    }
+}

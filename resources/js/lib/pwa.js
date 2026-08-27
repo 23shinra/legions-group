@@ -1,0 +1,49 @@
+export async function registerServiceWorker() {
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+        return null;
+    }
+
+    try {
+        return await navigator.serviceWorker.register('/sw.js', {
+            scope: '/',
+        });
+    } catch (error) {
+        console.warn('Service worker registration failed', error);
+        return null;
+    }
+}
+
+export function notificationsSupported() {
+    return (
+        typeof window !== 'undefined' &&
+        'Notification' in window &&
+        'serviceWorker' in navigator
+    );
+}
+
+export async function showLocalNotification({
+    title = 'Legions Group',
+    body = '',
+    url = '/',
+} = {}) {
+    if (!notificationsSupported() || Notification.permission !== 'granted') {
+        return false;
+    }
+
+    const registration = await navigator.serviceWorker.ready;
+
+    if (registration?.showNotification) {
+        await registration.showNotification(title, {
+            body,
+            icon: '/icon-192.png',
+            badge: '/favicon-32.png',
+            data: { url },
+        });
+        return true;
+    }
+
+    // Fallback when SW is unavailable
+    // eslint-disable-next-line no-new
+    new Notification(title, { body, icon: '/icon-192.png' });
+    return true;
+}

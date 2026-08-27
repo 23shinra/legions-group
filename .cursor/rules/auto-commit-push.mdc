@@ -1,0 +1,40 @@
+---
+description: After any completed work, always commit and push to origin so deploy picks up changes
+alwaysApply: true
+---
+
+# Auto commit + push (deploy pipeline)
+
+This project deploys from GitHub (`23shinra/legions-group`). Every finished agent turn that changed files **must** land on `main` immediately.
+
+## Required end-of-task sequence
+
+When you finish a user request that modified the repo (code, config, assets, rules, hooks):
+
+1. Run in parallel: `git status`, `git diff`, `git log -5 --oneline`
+2. Stage relevant files (never `.env`, credentials, `*.sqlite`, `vendor/`, `node_modules/`)
+3. Commit with a short why-focused message via HEREDOC
+4. `git push -u origin HEAD` (or `git push` if tracking exists)
+
+Do this **without asking** — the user already opted into auto-commit/push for deploy.
+
+## Commit message
+
+Concise, 1–2 sentences, focus on why. Example:
+
+```bash
+git commit -m "$(cat <<'EOF'
+Improve manager advances list so approval decisions are clearer.
+
+EOF
+)"
+```
+
+## Do not
+
+- Skip push “to be safe”
+- Amend unless the repo’s amend safety rules all pass
+- Commit secrets or local DB files
+- Force-push to `main`/`master`
+
+A project `stop` hook also tries to commit/push leftover changes; still prefer committing yourself as the last step of the task.
