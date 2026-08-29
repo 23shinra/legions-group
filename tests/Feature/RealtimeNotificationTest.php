@@ -35,9 +35,9 @@ final class RealtimeNotificationTest extends TestCase
     {
         Notification::fake();
 
-        $worker = User::query()->where('email', 'worker1')->firstOrFail();
+        $worker = $this->firstWorker();
         $brigadier = $worker->brigade?->brigadier;
-        $manager = User::query()->where('email', 'manager')->firstOrFail();
+        $manager = $this->rosterUser('islam.ashirov');
 
         $this->assertNotNull($brigadier);
 
@@ -56,11 +56,11 @@ final class RealtimeNotificationTest extends TestCase
     {
         Notification::fake();
 
-        $worker = User::query()->where('email', 'worker1')->firstOrFail();
+        $worker = $this->firstWorker();
         $this->seedConfirmedShift($worker);
 
-        $manager = User::query()->where('email', 'manager')->firstOrFail();
-        $accountant = User::query()->where('email', 'accountant')->firstOrFail();
+        $manager = $this->rosterUser('islam.ashirov');
+        $accountant = $this->rosterUser('ramilya.parhatova');
         $brigadier = $worker->brigade?->brigadier;
 
         $this->assertNotNull($brigadier);
@@ -86,11 +86,11 @@ final class RealtimeNotificationTest extends TestCase
 
     public function test_advance_approval_notifies_worker_accountants_and_watchers(): void
     {
-        $worker = User::query()->where('email', 'worker1')->firstOrFail();
+        $worker = $this->firstWorker();
         $this->seedConfirmedShift($worker);
 
-        $manager = User::query()->where('email', 'manager')->firstOrFail();
-        $accountant = User::query()->where('email', 'accountant')->firstOrFail();
+        $manager = $this->rosterUser('islam.ashirov');
+        $accountant = $this->rosterUser('ramilya.parhatova');
         $brigadier = $worker->brigade?->brigadier;
 
         $this->assertNotNull($brigadier);
@@ -115,7 +115,7 @@ final class RealtimeNotificationTest extends TestCase
 
     public function test_immediate_broadcast_event_is_not_queued(): void
     {
-        $worker = User::query()->where('email', 'worker1')->firstOrFail();
+        $worker = $this->firstWorker();
         $this->ensureActiveObject($worker);
         $entry = $worker->pendingTimeEntry();
 

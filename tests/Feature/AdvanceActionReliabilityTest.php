@@ -21,7 +21,7 @@ final class AdvanceActionReliabilityTest extends TestCase
         $this->seed();
         Schema::dropIfExists('push_subscriptions');
 
-        $manager = User::query()->where('email', 'manager')->firstOrFail();
+        $manager = $this->rosterUser('islam.ashirov');
 
         $this->actingAs($manager)
             ->get(route('manager.advances.index'))
@@ -32,7 +32,7 @@ final class AdvanceActionReliabilityTest extends TestCase
     {
         $this->seed();
 
-        $worker = User::query()->where('email', 'worker1')->firstOrFail();
+        $worker = $this->firstWorker();
         $this->seedConfirmedShift($worker);
         Schema::dropIfExists('push_subscriptions');
 
@@ -58,8 +58,8 @@ final class AdvanceActionReliabilityTest extends TestCase
     {
         $this->seed();
 
-        $worker = User::query()->where('email', 'worker1')->firstOrFail();
-        $manager = User::query()->where('email', 'manager')->firstOrFail();
+        $worker = $this->firstWorker();
+        $manager = $this->rosterUser('islam.ashirov');
         $this->seedConfirmedShift($worker);
 
         $amount = min(10_000.0, (float) app(AdvanceService::class)->eligibility($worker)['available_for_advance']);

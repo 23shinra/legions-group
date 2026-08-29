@@ -48,6 +48,16 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        $user = Auth::user();
+
+        if ($user !== null && ! $user->is_active) {
+            Auth::logout();
+
+            throw ValidationException::withMessages([
+                'email' => 'Аккаунт деактивирован. Обратитесь к руководителю.',
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 

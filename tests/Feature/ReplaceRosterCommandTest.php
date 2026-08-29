@@ -20,7 +20,7 @@ final class ReplaceRosterCommandTest extends TestCase
     {
         $this->seed();
 
-        $worker = User::query()->where('email', 'worker1')->firstOrFail();
+        $worker = $this->rosterUser('dilmurat.ashirov');
 
         TimeEntry::query()->create([
             'user_id' => $worker->id,
@@ -41,7 +41,7 @@ final class ReplaceRosterCommandTest extends TestCase
 
         $this->assertSame(0, TimeEntry::query()->count());
         $this->assertSame(0, AdvanceRequest::query()->count());
-        $this->assertSame('Аширов Дильмурат', User::query()->where('email', 'worker1')->value('name'));
+        $this->assertSame('Аширов Дильмурат', User::query()->where('email', 'dilmurat.ashirov')->value('name'));
         $this->assertSame(count(RosterInstaller::workerNames()), User::query()->where('role', UserRole::Worker)->count());
     }
 }

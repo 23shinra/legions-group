@@ -3,6 +3,7 @@
 namespace Tests;
 
 use App\Enums\ObjectStatus;
+use App\Enums\UserRole;
 use App\Models\ObjectAssignment;
 use App\Models\User;
 use App\Models\WorkObject;
@@ -10,6 +11,24 @@ use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 
 abstract class TestCase extends BaseTestCase
 {
+    protected function rosterUser(string $login): User
+    {
+        return User::query()->where('email', $login)->firstOrFail();
+    }
+
+    protected function userByRole(UserRole $role): User
+    {
+        return User::query()->where('role', $role)->firstOrFail();
+    }
+
+    protected function firstWorker(): User
+    {
+        return User::query()
+            ->where('role', UserRole::Worker)
+            ->orderBy('id')
+            ->firstOrFail();
+    }
+
     protected function ensureActiveObject(User $worker): WorkObject
     {
         $worker->loadMissing('brigade');

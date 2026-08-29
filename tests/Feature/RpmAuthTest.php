@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Models\User;
+use App\Services\RosterInstaller;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -16,7 +16,7 @@ final class RpmAuthTest extends TestCase
     {
         $this->seed();
 
-        $manager = User::query()->where('email', 'manager')->firstOrFail();
+        $manager = $this->rosterUser('islam.ashirov');
 
         $this->actingAs($manager)
             ->get(route('manager.dashboard'))
@@ -27,7 +27,7 @@ final class RpmAuthTest extends TestCase
     {
         $this->seed();
 
-        $worker = User::query()->where('email', 'worker1')->firstOrFail();
+        $worker = $this->firstWorker();
 
         $this->actingAs($worker)
             ->get(route('worker.home'))
@@ -38,10 +38,35 @@ final class RpmAuthTest extends TestCase
     {
         $this->seed();
 
-        $worker = User::query()->where('email', 'worker1')->firstOrFail();
+        $worker = $this->firstWorker();
 
         $this->actingAs($worker)
             ->get(route('manager.dashboard'))
             ->assertForbidden();
+    }
+
+    public function test_seeded_manager_can_login_with_initial_password(): void
+    {
+        $this->seed();
+
+        $response = $this->post('/login', [
+            'email' => 'islam.ashirov',
+            'password' => RosterInstaller::INITIAL_PASSWORD,
+        ]);
+
+        $this->assertAuthenticated();
+        $response->assertRedirect(route('dashboard', absolute: false));
+    }
+
+    public function test_seeded_manager_cannot_login_with_old_demo_password(): void
+    {
+        $this->seed();
+
+        $this->post('/login', [
+            'email' => 'islam.ashirov',
+            'password' => '123',
+        ]);
+
+        $this->assertGuest();
     }
 }

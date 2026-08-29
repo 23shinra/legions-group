@@ -17,6 +17,7 @@ class AuthenticationTest extends TestCase
         $response->assertOk();
         $response->assertDontSee('Быстрый вход');
         $response->assertDontSee('worker1');
+        $response->assertDontSee('123');
     }
 
     public function test_users_can_authenticate_using_the_login_screen(): void

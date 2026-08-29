@@ -36,7 +36,6 @@ export default function ManagerEmployeesSettings({
     const manualForm = useForm({
         name: '',
         email: '',
-        password: '123',
         phone: '',
         role: 'worker',
         brigade_id: '',
@@ -59,7 +58,6 @@ export default function ManagerEmployeesSettings({
                 manualForm.reset(
                     'name',
                     'email',
-                    'password',
                     'phone',
                     'position',
                     'max_advance',
@@ -171,31 +169,11 @@ export default function ManagerEmployeesSettings({
                                     manualForm.setData('email', e.target.value)
                                 }
                                 className={fieldClass}
-                                placeholder="ivan.petrov"
+                                placeholder="Сгенерируется из ФИО, если пусто"
                             />
                             {manualForm.errors.email && (
                                 <p className="mt-1.5 text-sm text-[var(--muted)]">
                                     {manualForm.errors.email}
-                                </p>
-                            )}
-                        </div>
-
-                        <div>
-                            <label htmlFor="emp_password" className={labelClass}>
-                                Пароль
-                            </label>
-                            <input
-                                id="emp_password"
-                                type="text"
-                                value={manualForm.data.password}
-                                onChange={(e) =>
-                                    manualForm.setData('password', e.target.value)
-                                }
-                                className={fieldClass}
-                            />
-                            {manualForm.errors.password && (
-                                <p className="mt-1.5 text-sm text-[var(--muted)]">
-                                    {manualForm.errors.password}
                                 </p>
                             )}
                         </div>

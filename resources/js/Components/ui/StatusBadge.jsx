@@ -12,7 +12,7 @@ const STATUS_STYLES = {
     awaiting:
         'bg-amber-500/15 text-amber-800 ring-amber-500/30 [data-theme=dark]:text-amber-300',
     absent: 'bg-red-500/15 text-red-700 ring-red-500/30 [data-theme=dark]:text-red-300',
-    late: 'bg-amber-500/15 text-amber-800 ring-amber-500/30 [data-theme=dark]:text-amber-300',
+    late: 'bg-violet-500/15 text-violet-800 ring-violet-500/30 [data-theme=dark]:text-violet-300',
     planned: 'bg-[var(--bezel)] text-[var(--ink)] ring-[var(--bezel-ring)]',
     completed: 'bg-[var(--surface-muted)] text-[var(--ink)] ring-[var(--bezel-ring)]',
     closed: 'bg-[var(--bezel)] text-[var(--muted)] ring-[var(--bezel-ring)]',

@@ -18,6 +18,8 @@ use NotificationChannels\WebPush\HasPushSubscriptions;
 
 #[Fillable([
     'name',
+    'first_name',
+    'last_name',
     'email',
     'password',
     'phone',

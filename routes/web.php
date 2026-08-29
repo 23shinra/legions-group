@@ -3,11 +3,16 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Accountant\AccountantController;
+use App\Http\Controllers\AdvanceReceiptController;
 use App\Http\Controllers\Brigadier\BrigadierController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Manager\AccountController;
+use App\Http\Controllers\Manager\ActivityLogController;
 use App\Http\Controllers\Manager\ManagerController;
+use App\Http\Controllers\Manager\ScheduleController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\Worker\WorkerController;
 use Illuminate\Support\Facades\Route;
@@ -25,9 +30,9 @@ Route::middleware(['auth'])->group(function (): void {
         ->name('notifications.read');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])
         ->name('notifications.read-all');
-    Route::post('/push-subscriptions', [\App\Http\Controllers\PushSubscriptionController::class, 'store'])
+    Route::post('/push-subscriptions', [PushSubscriptionController::class, 'store'])
         ->name('push-subscriptions.store');
-    Route::delete('/push-subscriptions', [\App\Http\Controllers\PushSubscriptionController::class, 'destroy'])
+    Route::delete('/push-subscriptions', [PushSubscriptionController::class, 'destroy'])
         ->name('push-subscriptions.destroy');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -57,6 +62,10 @@ Route::middleware(['auth'])->group(function (): void {
     });
 
     Route::middleware('role:manager')->prefix('manager')->name('manager.')->group(function (): void {
+        Route::get('/settings/accounts', [AccountController::class, 'index'])->name('accounts.index');
+        Route::get('/settings/accounts/{account}', [AccountController::class, 'edit'])->name('accounts.edit');
+        Route::patch('/settings/accounts/{account}', [AccountController::class, 'update'])->name('accounts.update');
+        Route::patch('/settings/accounts/{account}/password', [AccountController::class, 'updatePassword'])->name('accounts.password');
         Route::get('/', [ManagerController::class, 'dashboard'])->name('dashboard');
         Route::get('/employees', [ManagerController::class, 'employees'])->name('employees.index');
         Route::post('/employees', [ManagerController::class, 'storeEmployee'])->name('employees.store');
@@ -72,9 +81,9 @@ Route::middleware(['auth'])->group(function (): void {
         Route::patch('/brigades/{brigade}', [ManagerController::class, 'updateBrigade'])->name('brigades.update');
         Route::post('/brigades/{brigade}/members', [ManagerController::class, 'addBrigadeMember'])->name('brigades.members.store');
         Route::delete('/brigades/{brigade}/members/{member}', [ManagerController::class, 'removeBrigadeMember'])->name('brigades.members.destroy');
-        Route::get('/schedule', [\App\Http\Controllers\Manager\ScheduleController::class, 'index'])
+        Route::get('/schedule', [ScheduleController::class, 'index'])
             ->name('schedule.index');
-        Route::post('/schedule', [\App\Http\Controllers\Manager\ScheduleController::class, 'store'])
+        Route::post('/schedule', [ScheduleController::class, 'store'])
             ->name('schedule.store');
         Route::get('/objects', [ManagerController::class, 'objects'])->name('objects.index');
         Route::post('/objects', [ManagerController::class, 'storeObject'])->name('objects.store');
@@ -84,7 +93,7 @@ Route::middleware(['auth'])->group(function (): void {
         Route::delete('/objects/{object}/members/{member}', [ManagerController::class, 'unassignObjectMember'])->name('objects.members.destroy');
         Route::post('/objects/{object}/close', [ManagerController::class, 'closeObject'])->name('objects.close');
         Route::get('/advances', [ManagerController::class, 'advances'])->name('advances.index');
-        Route::get('/advances/{advance}/receipt', \App\Http\Controllers\AdvanceReceiptController::class)
+        Route::get('/advances/{advance}/receipt', AdvanceReceiptController::class)
             ->name('advances.receipt');
         Route::post('/advances/{advance}/approve', [ManagerController::class, 'approveAdvance'])->name('advances.approve');
         Route::post('/advances/{advance}/reject', [ManagerController::class, 'rejectAdvance'])->name('advances.reject');
@@ -92,14 +101,14 @@ Route::middleware(['auth'])->group(function (): void {
         Route::get('/reports/pdf', [ManagerController::class, 'exportPdf'])->name('reports.pdf');
         Route::get('/reports/{employee}', [ManagerController::class, 'showReport'])->name('reports.show');
         Route::get('/reports', [ManagerController::class, 'reports'])->name('reports.index');
-        Route::get('/activity', [\App\Http\Controllers\Manager\ActivityLogController::class, 'index'])
+        Route::get('/activity', [ActivityLogController::class, 'index'])
             ->name('activity.index');
     });
 
     Route::middleware('role:accountant')->prefix('accountant')->name('accountant.')->group(function (): void {
         Route::get('/', [AccountantController::class, 'dashboard'])->name('dashboard');
         Route::get('/advances', [AccountantController::class, 'advances'])->name('advances.index');
-        Route::get('/advances/{advance}/receipt', \App\Http\Controllers\AdvanceReceiptController::class)
+        Route::get('/advances/{advance}/receipt', AdvanceReceiptController::class)
             ->name('advances.receipt');
         Route::post('/advances/{advance}/paid', [AccountantController::class, 'markPaid'])->name('advances.paid');
         Route::get('/payments', [AccountantController::class, 'payments'])->name('payments.index');
@@ -111,7 +120,7 @@ Route::middleware(['auth'])->group(function (): void {
         Route::get('/reports/pdf', [AccountantController::class, 'exportPdf'])->name('reports.pdf');
         Route::get('/reports/{employee}', [AccountantController::class, 'showReport'])->name('reports.show');
         Route::get('/reports', [AccountantController::class, 'reports'])->name('reports.index');
-        Route::get('/activity', [\App\Http\Controllers\Manager\ActivityLogController::class, 'index'])
+        Route::get('/activity', [ActivityLogController::class, 'index'])
             ->name('activity.index');
     });
 });

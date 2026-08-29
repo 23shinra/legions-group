@@ -7,7 +7,10 @@ namespace App\Http\Controllers\Manager;
 use App\Enums\AdvanceStatus;
 use App\Enums\PayType;
 use App\Enums\UserRole;
+use App\Exports\BrigadeReportExport;
+use App\Exports\EmployeeReportExport;
 use App\Exports\EmployeesImportTemplateExport;
+use App\Exports\ObjectReportExport;
 use App\Http\Controllers\Controller;
 use App\Imports\EmployeesImport;
 use App\Models\AdvanceRequest;
@@ -25,6 +28,7 @@ use App\Services\ObjectService;
 use App\Services\PayrollService;
 use App\Services\RealtimeNotifier;
 use App\Services\ReportService;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -653,7 +657,7 @@ final class ManagerController extends Controller
             ->latest('reviewed_at');
 
         if (preg_match('/^\d{4}-\d{2}$/', $month) === 1) {
-            $start = \Carbon\Carbon::parse($month.'-01')->startOfMonth();
+            $start = Carbon::parse($month.'-01')->startOfMonth();
             $history->whereBetween('created_at', [$start, $start->copy()->endOfMonth()]);
         }
 
@@ -750,7 +754,7 @@ final class ManagerController extends Controller
         if ($type === 'brigades') {
             $data = $reports->brigadeReport($from, $to);
 
-            return (new \App\Exports\BrigadeReportExport($data['reports']))
+            return (new BrigadeReportExport($data['reports']))
                 ->download('otchet-brigady.xlsx');
         }
 
@@ -758,7 +762,7 @@ final class ManagerController extends Controller
             $object = WorkObject::query()->findOrFail($request->integer('object_id'));
             $data = $reports->objectReport($object);
 
-            return (new \App\Exports\ObjectReportExport($data['reports']))
+            return (new ObjectReportExport($data['reports']))
                 ->download('otchet-objekt.xlsx');
         }
 
@@ -771,7 +775,7 @@ final class ManagerController extends Controller
             ));
         }
 
-        return (new \App\Exports\EmployeeReportExport($data['reports']))
+        return (new EmployeeReportExport($data['reports']))
             ->download('otchet-sotrudniki.xlsx');
     }
 
@@ -809,15 +813,15 @@ final class ManagerController extends Controller
     }
 
     /**
-     * @return array{0: \Carbon\Carbon, 1: \Carbon\Carbon}
+     * @return array{0: Carbon, 1: Carbon}
      */
     private function reportPeriod(Request $request): array
     {
         $from = $request->filled('from')
-            ? \Carbon\Carbon::parse($request->string('from')->toString())->startOfDay()
+            ? Carbon::parse($request->string('from')->toString())->startOfDay()
             : now()->startOfMonth();
         $to = $request->filled('to')
-            ? \Carbon\Carbon::parse($request->string('to')->toString())->endOfDay()
+            ? Carbon::parse($request->string('to')->toString())->endOfDay()
             : now()->endOfMonth();
 
         if ($from->greaterThan($to)) {
@@ -831,8 +835,8 @@ final class ManagerController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:3', 'max:255'],
+            'email' => ['nullable', 'string', 'max:255', 'unique:users,email'],
+            'password' => ['nullable', 'string', 'min:8', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
             'role' => ['required', Rule::in([UserRole::Worker->value, UserRole::Brigadier->value])],
             'brigade_id' => ['nullable', 'exists:brigades,id'],

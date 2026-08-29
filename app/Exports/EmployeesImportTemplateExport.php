@@ -16,8 +16,8 @@ final class EmployeesImportTemplateExport implements FromCollection, WithHeading
     {
         return collect([
             [
-                'Иван Петров',
-                'ivan.petrov',
+                'Петров Иван',
+                '',
                 '+77001234567',
                 'worker',
                 'Бригада №1',
@@ -26,7 +26,6 @@ final class EmployeesImportTemplateExport implements FromCollection, WithHeading
                 1800,
                 50000,
                 now()->toDateString(),
-                '123',
             ],
         ]);
     }
@@ -45,7 +44,6 @@ final class EmployeesImportTemplateExport implements FromCollection, WithHeading
             'Ставка',
             'Лимит аванса',
             'Дата приёма',
-            'Пароль',
         ];
     }
 

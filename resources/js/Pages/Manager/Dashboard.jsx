@@ -46,7 +46,7 @@ function PresenceBar({ atWork, awaiting, late, absent, total }) {
             label: 'Опоздали',
             value: late,
             barValue: late,
-            className: 'bg-orange-500',
+            className: 'bg-violet-500',
             target: 'section-attention',
         },
         {
@@ -85,7 +85,11 @@ function PresenceBar({ atWork, awaiting, late, absent, total }) {
                         key={segment.key}
                         type="button"
                         onClick={() => scrollToId(segment.target)}
-                        className="rounded-2xl bg-[var(--surface-muted)] px-3 py-3 text-left transition-fluid hover:ring-1 hover:ring-[var(--bezel-ring)]"
+                        className={`rounded-2xl px-3 py-3 text-left transition-fluid hover:ring-1 hover:ring-[var(--bezel-ring)] ${
+                            segment.key === 'late'
+                                ? 'bg-violet-500/12 hover:bg-violet-500/20'
+                                : 'bg-[var(--surface-muted)]'
+                        }`}
                     >
                         <div className="mb-1.5 flex items-center gap-2">
                             <span className={`h-2 w-2 rounded-full ${segment.className}`} />
@@ -120,9 +124,9 @@ const ATTENTION_TONES = {
     },
     late: {
         label: 'Опоздал',
-        row: 'bg-orange-500/12 hover:bg-orange-500/20',
-        bar: 'bg-orange-500',
-        chip: 'bg-orange-600 text-white',
+        row: 'bg-violet-500/12 hover:bg-violet-500/20',
+        bar: 'bg-violet-500',
+        chip: 'bg-violet-600 text-white',
         amount: '',
     },
 };

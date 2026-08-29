@@ -16,28 +16,17 @@ use Illuminate\Support\Facades\Schema;
 
 final class RosterInstaller
 {
-    public const PASSWORD = '123';
+    public const INITIAL_PASSWORD = 'password';
 
     /**
      * @return list<string>
      */
     public static function workerNames(): array
     {
-        return [
-            'Аширов Дильмурат',
-            'Нурузов Абдулла',
-            'Садыров Ришат',
-            'Изияров Диля',
-            'Айтаев Эльданиз',
-            'Алимбеков Алибек',
-            'Рома',
-            'Ахметов Дильмурат',
-            'Турганов Амранжан',
-            'Турганов Арафат',
-            'Нурматов Ильяр',
-            'Чернышов Константин',
-            'Абдурахманов Дильмурат',
-        ];
+        return array_values(array_map(
+            static fn (array $entry): string => $entry['name'],
+            array_filter(self::accounts(), static fn (array $entry): bool => $entry['role'] === UserRole::Worker),
+        ));
     }
 
     /**
@@ -45,43 +34,164 @@ final class RosterInstaller
      */
     public static function brigadierNames(): array
     {
+        return array_values(array_map(
+            static fn (array $entry): string => $entry['name'],
+            array_filter(self::accounts(), static fn (array $entry): bool => $entry['role'] === UserRole::Brigadier),
+        ));
+    }
+
+    /**
+     * @return list<array{
+     *     login: string,
+     *     name: string,
+     *     first_name: string,
+     *     last_name: string|null,
+     *     role: UserRole
+     * }>
+     */
+    public static function accounts(): array
+    {
         return [
-            'Кадыров Абдыкахар',
-            'Абдурашитов Ильяр',
-            'Нурматов Алижан',
-            'Кадыров Турсун',
+            [
+                'login' => 'islam.ashirov',
+                'name' => 'Аширов Ислам',
+                'first_name' => 'Ислам',
+                'last_name' => 'Аширов',
+                'role' => UserRole::Manager,
+            ],
+            [
+                'login' => 'ramilya.parhatova',
+                'name' => 'Пархатова Рамиля',
+                'first_name' => 'Рамиля',
+                'last_name' => 'Пархатова',
+                'role' => UserRole::Accountant,
+            ],
+            [
+                'login' => 'abdykahar.kadyrov',
+                'name' => 'Кадыров Абдыкахар',
+                'first_name' => 'Абдыкахар',
+                'last_name' => 'Кадыров',
+                'role' => UserRole::Brigadier,
+            ],
+            [
+                'login' => 'ilyar.abdurashitov',
+                'name' => 'Абдурашитов Ильяр',
+                'first_name' => 'Ильяр',
+                'last_name' => 'Абдурашитов',
+                'role' => UserRole::Brigadier,
+            ],
+            [
+                'login' => 'alizhan.nurmatov',
+                'name' => 'Нурматов Алижан',
+                'first_name' => 'Алижан',
+                'last_name' => 'Нурматов',
+                'role' => UserRole::Brigadier,
+            ],
+            [
+                'login' => 'tursun.kadyrov',
+                'name' => 'Кадыров Турсун',
+                'first_name' => 'Турсун',
+                'last_name' => 'Кадыров',
+                'role' => UserRole::Brigadier,
+            ],
+            [
+                'login' => 'dilmurat.ashirov',
+                'name' => 'Аширов Дильмурат',
+                'first_name' => 'Дильмурат',
+                'last_name' => 'Аширов',
+                'role' => UserRole::Worker,
+            ],
+            [
+                'login' => 'abdulla.nuruzov',
+                'name' => 'Нурузов Абдулла',
+                'first_name' => 'Абдулла',
+                'last_name' => 'Нурузов',
+                'role' => UserRole::Worker,
+            ],
+            [
+                'login' => 'rishat.sadyrov',
+                'name' => 'Садыров Ришат',
+                'first_name' => 'Ришат',
+                'last_name' => 'Садыров',
+                'role' => UserRole::Worker,
+            ],
+            [
+                'login' => 'dilya.iziyarov',
+                'name' => 'Изияров Диля',
+                'first_name' => 'Диля',
+                'last_name' => 'Изияров',
+                'role' => UserRole::Worker,
+            ],
+            [
+                'login' => 'eldanis.aytaev',
+                'name' => 'Айтаев Эльданис',
+                'first_name' => 'Эльданис',
+                'last_name' => 'Айтаев',
+                'role' => UserRole::Worker,
+            ],
+            [
+                'login' => 'alibek.alimbekov',
+                'name' => 'Алимбеков Алибек',
+                'first_name' => 'Алибек',
+                'last_name' => 'Алимбеков',
+                'role' => UserRole::Worker,
+            ],
+            [
+                'login' => 'roma',
+                'name' => 'Рома',
+                'first_name' => 'Рома',
+                'last_name' => null,
+                'role' => UserRole::Worker,
+            ],
+            [
+                'login' => 'dilmurat.akhmetov',
+                'name' => 'Ахметов Дильмурат',
+                'first_name' => 'Дильмурат',
+                'last_name' => 'Ахметов',
+                'role' => UserRole::Worker,
+            ],
+            [
+                'login' => 'amranzhan.turganov',
+                'name' => 'Турганов Амранжан',
+                'first_name' => 'Амранжан',
+                'last_name' => 'Турганов',
+                'role' => UserRole::Worker,
+            ],
+            [
+                'login' => 'arafat.turganov',
+                'name' => 'Турганов Арафат',
+                'first_name' => 'Арафат',
+                'last_name' => 'Турганов',
+                'role' => UserRole::Worker,
+            ],
+            [
+                'login' => 'ilyar.nurmatov',
+                'name' => 'Нурматов Ильяр',
+                'first_name' => 'Ильяр',
+                'last_name' => 'Нурматов',
+                'role' => UserRole::Worker,
+            ],
+            [
+                'login' => 'konstantin.chernyshov',
+                'name' => 'Чернышов Константин',
+                'first_name' => 'Константин',
+                'last_name' => 'Чернышов',
+                'role' => UserRole::Worker,
+            ],
+            [
+                'login' => 'dilmurat.abdurakhmanov',
+                'name' => 'Абдурахманов Дильмурат',
+                'first_name' => 'Дильмурат',
+                'last_name' => 'Абдурахманов',
+                'role' => UserRole::Worker,
+            ],
         ];
     }
 
     public function seed(): void
     {
-        $password = Hash::make(self::PASSWORD);
+        $password = Hash::make(self::INITIAL_PASSWORD);
         $hourlyRate = PayDefaults::hourlyRate();
-
-        $manager = User::query()->create([
-            'name' => 'Аширов Ислам',
-            'email' => 'manager',
-            'password' => $password,
-            'role' => UserRole::Manager,
-            'position' => 'Руководитель',
-            'pay_type' => PayType::Fixed,
-            'rate' => 0,
-            'hired_at' => now(),
-            'email_verified_at' => now(),
-        ]);
-
-        User::query()->create([
-            'name' => 'Пархатова Рамиля',
-            'email' => 'accountant',
-            'password' => $password,
-            'role' => UserRole::Accountant,
-            'position' => 'Бухгалтер',
-            'pay_type' => PayType::Fixed,
-            'rate' => 0,
-            'hired_at' => now(),
-            'email_verified_at' => now(),
-        ]);
-
         $brigadeNames = [
             'Бригада Кадырова А.',
             'Бригада Абдурашитова',
@@ -89,27 +199,36 @@ final class RosterInstaller
             'Бригада Кадырова Т.',
         ];
 
-        $brigades = [];
+        $manager = $this->createAccount(
+            collect(self::accounts())->firstWhere('role', UserRole::Manager),
+            $password,
+            $hourlyRate,
+        );
 
-        foreach (self::brigadierNames() as $index => $name) {
-            $brigadier = User::query()->create([
-                'name' => $name,
-                'email' => 'brigadier'.($index + 1),
-                'password' => $password,
-                'role' => UserRole::Brigadier,
-                'position' => 'Бригадир',
-                'pay_type' => PayType::Hourly,
-                'rate' => $hourlyRate,
-                'hired_at' => now(),
-                'email_verified_at' => now(),
-            ]);
+        $this->createAccount(
+            collect(self::accounts())->firstWhere('role', UserRole::Accountant),
+            $password,
+            $hourlyRate,
+        );
+
+        $brigades = [];
+        $brigadierIndex = 0;
+
+        foreach (self::accounts() as $entry) {
+            if ($entry['role'] !== UserRole::Brigadier) {
+                continue;
+            }
+
+            $brigadier = $this->createAccount($entry, $password, $hourlyRate);
 
             $brigade = Brigade::query()->create([
-                'name' => $brigadeNames[$index],
+                'name' => $brigadeNames[$brigadierIndex],
                 'brigadier_id' => $brigadier->id,
             ]);
 
             $brigadier->update(['brigade_id' => $brigade->id]);
+            $brigades[] = $brigade;
+            $brigadierIndex++;
 
             SalaryHistory::query()->create([
                 'user_id' => $brigadier->id,
@@ -119,25 +238,19 @@ final class RosterInstaller
                 'note' => 'Стартовая ставка',
                 'changed_by' => $manager->id,
             ]);
-
-            $brigades[] = $brigade;
         }
 
-        foreach (self::workerNames() as $index => $name) {
-            $brigade = $brigades[$index % count($brigades)];
+        $workerIndex = 0;
 
-            $worker = User::query()->create([
-                'name' => $name,
-                'email' => 'worker'.($index + 1),
-                'password' => $password,
-                'role' => UserRole::Worker,
-                'brigade_id' => $brigade->id,
-                'position' => 'Строитель',
-                'pay_type' => PayType::Hourly,
-                'rate' => $hourlyRate,
-                'hired_at' => now(),
-                'email_verified_at' => now(),
-            ]);
+        foreach (self::accounts() as $entry) {
+            if ($entry['role'] !== UserRole::Worker) {
+                continue;
+            }
+
+            $brigade = $brigades[$workerIndex % count($brigades)] ?? null;
+            $workerIndex++;
+
+            $worker = $this->createAccount($entry, $password, $hourlyRate, $brigade?->id);
 
             SalaryHistory::query()->create([
                 'user_id' => $worker->id,
@@ -148,6 +261,71 @@ final class RosterInstaller
                 'changed_by' => $manager->id,
             ]);
         }
+    }
+
+    /**
+     * @param  array{
+     *     login: string,
+     *     name: string,
+     *     first_name: string,
+     *     last_name: string|null,
+     *     role: UserRole
+     * }|null  $entry
+     */
+    private function createAccount(?array $entry, string $password, float $hourlyRate, ?int $brigadeId = null): User
+    {
+        if ($entry === null) {
+            throw new \InvalidArgumentException('Roster entry is missing.');
+        }
+
+        return User::query()->create([
+            'name' => $entry['name'],
+            'first_name' => $entry['first_name'],
+            'last_name' => $entry['last_name'],
+            'email' => $entry['login'],
+            'password' => $password,
+            'role' => $entry['role'],
+            'brigade_id' => $brigadeId,
+            'position' => match ($entry['role']) {
+                UserRole::Manager => 'Руководитель',
+                UserRole::Accountant => 'Бухгалтер',
+                UserRole::Brigadier => 'Бригадир',
+                UserRole::Worker => 'Строитель',
+            },
+            'pay_type' => in_array($entry['role'], [UserRole::Manager, UserRole::Accountant], true)
+                ? PayType::Fixed
+                : PayType::Hourly,
+            'rate' => in_array($entry['role'], [UserRole::Manager, UserRole::Accountant], true)
+                ? 0
+                : $hourlyRate,
+            'hired_at' => now(),
+            'email_verified_at' => now(),
+        ]);
+    }
+
+    public function syncLoginsInPlace(): int
+    {
+        $password = Hash::make(self::INITIAL_PASSWORD);
+        $updated = 0;
+
+        foreach (self::accounts() as $entry) {
+            $user = User::query()->where('name', $entry['name'])->first();
+
+            if ($user === null) {
+                continue;
+            }
+
+            $user->update([
+                'first_name' => $entry['first_name'],
+                'last_name' => $entry['last_name'],
+                'email' => $entry['login'],
+                'password' => $password,
+            ]);
+
+            $updated++;
+        }
+
+        return $updated;
     }
 
     public function replace(): void

@@ -21,7 +21,7 @@ final class ReplaceRosterCommand extends Command
 
         $roster->replace();
 
-        $this->info('Состав обновлён. Пароль у всех: '.RosterInstaller::PASSWORD);
+        $this->info('Состав обновлён.');
 
         return self::SUCCESS;
     }

@@ -1,5 +1,6 @@
 import BezelCard from '@/Components/ui/BezelCard';
 import IslandButton from '@/Components/ui/IslandButton';
+import AccountManagerSettings from '@/Components/AccountManagerSettings';
 import ManagerEmployeesSettings from '@/Components/ManagerEmployeesSettings';
 import PageHeader from '@/Components/ui/PageHeader';
 import useNotificationPermission from '@/hooks/useNotificationPermission';
@@ -92,17 +93,20 @@ export default function Index({ status, brigades = [], payTypes = [] }) {
                 title="Настройки"
                 subtitle={
                     user?.role === 'manager'
-                        ? 'Сотрудники, тема, уведомления, пароль и выход'
+                        ? 'Аккаунты, сотрудники, тема, уведомления, пароль и выход'
                         : 'Тема, уведомления, пароль и выход'
                 }
             />
 
             {user?.role === 'manager' && (
-                <ManagerEmployeesSettings
-                    brigades={brigades}
-                    payTypes={payTypes}
-                    status={status}
-                />
+                <>
+                    <AccountManagerSettings />
+                    <ManagerEmployeesSettings
+                        brigades={brigades}
+                        payTypes={payTypes}
+                        status={status}
+                    />
+                </>
             )}
 
             <div className="grid gap-5 sm:gap-6 lg:grid-cols-12 lg:gap-8">

@@ -11,11 +11,13 @@ use App\Models\ObjectAssignment;
 use App\Models\SalaryHistory;
 use App\Models\User;
 use App\Models\WorkObject;
+use App\Support\LoginGenerator;
 use App\Support\PayDefaults;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
 
 final readonly class EmployeeService
 {
@@ -37,11 +39,17 @@ final readonly class EmployeeService
         $user = DB::transaction(function () use ($data, $manager, $role): User {
             $hiredAt = $data['hired_at'] ?? now()->toDateString();
             $payType = PayType::from((string) ($data['pay_type'] ?? PayType::Hourly->value));
+            $nameParts = LoginGenerator::fromFullName((string) $data['name']);
+            $email = ! empty($data['email'])
+                ? Str::lower(trim((string) $data['email']))
+                : LoginGenerator::uniqueLogin($nameParts['login']);
 
             $user = User::query()->create([
-                'name' => (string) $data['name'],
-                'email' => (string) $data['email'],
-                'password' => (string) ($data['password'] ?? '123'),
+                'name' => (string) ($data['name'] ?: $nameParts['display_name']),
+                'first_name' => $nameParts['first_name'],
+                'last_name' => $nameParts['last_name'],
+                'email' => $email,
+                'password' => (string) ($data['password'] ?? RosterInstaller::INITIAL_PASSWORD),
                 'phone' => $data['phone'] ?? null,
                 'role' => $role,
                 'brigade_id' => $data['brigade_id'] ?? null,
@@ -267,8 +275,13 @@ final readonly class EmployeeService
         $hiredAt = $this->cell($row, ['data_priema', 'hired_at', 'дата_приема', 'datapriema']);
         $password = $this->cell($row, ['parol', 'password', 'пароль']);
 
-        if ($name === null || $email === null) {
-            throw new InvalidArgumentException('Укажите имя и логин.');
+        if ($name === null) {
+            throw new InvalidArgumentException('Укажите имя.');
+        }
+
+        if ($email === null || $email === '') {
+            $nameParts = LoginGenerator::fromFullName($name);
+            $email = LoginGenerator::uniqueLogin($nameParts['login']);
         }
 
         if (User::query()->where('email', $email)->exists()) {
@@ -289,7 +302,7 @@ final readonly class EmployeeService
         return $this->create([
             'name' => $name,
             'email' => $email,
-            'password' => $password ?: '123',
+            'password' => $password ?: RosterInstaller::INITIAL_PASSWORD,
             'phone' => $phone,
             'role' => $this->parseRole($roleRaw),
             'brigade_id' => $brigadeId,
@@ -362,7 +375,7 @@ final readonly class EmployeeService
         }
 
         if (is_numeric($value)) {
-            return \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject((float) $value)->format('Y-m-d');
+            return Date::excelToDateTimeObject((float) $value)->format('Y-m-d');
         }
 
         $timestamp = strtotime($value);
