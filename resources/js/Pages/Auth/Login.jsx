@@ -1,27 +1,16 @@
 import BezelCard from '@/Components/ui/BezelCard';
 import BrandLogo from '@/Components/BrandLogo';
 import IslandButton from '@/Components/ui/IslandButton';
-import { Head, router, useForm } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import {
     ArrowRight,
-    Calculator,
     Eye,
     EyeSlash,
-    HardHat,
-    User,
-    UsersThree,
 } from '@phosphor-icons/react';
 import { useState } from 'react';
 
-const ROLE_ICONS = {
-    manager: HardHat,
-    accountant: Calculator,
-    brigadier: UsersThree,
-    worker: User,
-};
-
-export default function Login({ status, demoAccounts = [] }) {
+export default function Login({ status }) {
     const [showPassword, setShowPassword] = useState(false);
     const { data, setData, post, processing, errors, reset } = useForm({
         email: '',
@@ -33,14 +22,6 @@ export default function Login({ status, demoAccounts = [] }) {
         e.preventDefault();
         post(route('login'), {
             onFinish: () => reset('password'),
-        });
-    };
-
-    const quickLogin = (login) => {
-        router.post(route('login'), {
-            email: login,
-            password: '123',
-            remember: true,
         });
     };
 
@@ -86,7 +67,7 @@ export default function Login({ status, demoAccounts = [] }) {
                                     value={data.email}
                                     autoComplete="username"
                                     autoFocus
-                                    placeholder="worker1"
+                                    placeholder="логин"
                                     onChange={(e) => setData('email', e.target.value)}
                                     className="input-soft"
                                 />
@@ -109,7 +90,7 @@ export default function Login({ status, demoAccounts = [] }) {
                                         name="password"
                                         value={data.password}
                                         autoComplete="current-password"
-                                        placeholder="123"
+                                        placeholder="пароль"
                                         onChange={(e) => setData('password', e.target.value)}
                                         className="input-soft pr-12"
                                     />
@@ -140,38 +121,6 @@ export default function Login({ status, demoAccounts = [] }) {
                                 {processing ? 'Вход…' : 'Войти'}
                             </IslandButton>
                         </form>
-                    </BezelCard>
-
-                    <BezelCard padding="p-4 sm:p-5">
-                        <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">
-                            Быстрый вход · пароль 123
-                        </p>
-                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                            {demoAccounts.map((account) => {
-                                const Icon = ROLE_ICONS[account.role] ?? User;
-
-                                return (
-                                    <button
-                                        key={account.login}
-                                        type="button"
-                                        onClick={() => quickLogin(account.login)}
-                                        className="group flex min-h-14 items-center gap-3 rounded-2xl bg-[var(--surface-muted)] px-3 py-3 text-left transition-fluid hover:bg-[var(--surface)] hover:shadow-soft active:scale-[0.98]"
-                                    >
-                                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--bezel)] text-[var(--accent)] transition-fluid group-hover:bg-[var(--accent)] group-hover:text-[var(--bg)]">
-                                            <Icon size={18} weight="light" />
-                                        </span>
-                                        <span className="min-w-0">
-                                            <span className="block truncate text-sm font-semibold text-[var(--ink)]">
-                                                {account.label}
-                                            </span>
-                                            <span className="block text-xs text-[var(--muted)]">
-                                                {account.login}
-                                            </span>
-                                        </span>
-                                    </button>
-                                );
-                            })}
-                        </div>
                     </BezelCard>
                 </motion.div>
             </div>

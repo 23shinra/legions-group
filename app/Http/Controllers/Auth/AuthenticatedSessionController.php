@@ -16,12 +16,6 @@ class AuthenticatedSessionController extends Controller
     {
         return Inertia::render('Auth/Login', [
             'status' => session('status'),
-            'demoAccounts' => [
-                ['login' => 'manager', 'label' => 'Руководитель', 'role' => 'manager'],
-                ['login' => 'accountant', 'label' => 'Бухгалтер', 'role' => 'accountant'],
-                ['login' => 'brigadier1', 'label' => 'Бригадир', 'role' => 'brigadier'],
-                ['login' => 'worker1', 'label' => 'Строитель', 'role' => 'worker'],
-            ],
         ]);
     }
 

@@ -78,9 +78,7 @@ final class AdvanceActionReliabilityTest extends TestCase
     private function seedConfirmedShift(User $worker): void
     {
         $worker->loadMissing('brigade.brigadier');
-        $object = $worker->brigade?->activeObject();
-
-        $this->assertNotNull($object);
+        $object = $this->ensureActiveObject($worker);
 
         $worker->advanceRequests()->delete();
         $worker->payments()->delete();

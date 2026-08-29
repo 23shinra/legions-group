@@ -41,6 +41,8 @@ final class RealtimeNotificationTest extends TestCase
 
         $this->assertNotNull($brigadier);
 
+        $this->ensureActiveObject($worker);
+
         app(TimeTrackingService::class)->requestArrival($worker);
 
         Notification::assertSentTo($brigadier, ArrivalConfirmationRequested::class);
@@ -114,6 +116,7 @@ final class RealtimeNotificationTest extends TestCase
     public function test_immediate_broadcast_event_is_not_queued(): void
     {
         $worker = User::query()->where('email', 'worker1')->firstOrFail();
+        $this->ensureActiveObject($worker);
         $entry = $worker->pendingTimeEntry();
 
         if ($entry === null) {
@@ -136,9 +139,7 @@ final class RealtimeNotificationTest extends TestCase
     private function seedConfirmedShift(User $worker): WorkObject
     {
         $worker->loadMissing('brigade.brigadier');
-        $object = $worker->brigade?->activeObject();
-
-        $this->assertNotNull($object);
+        $object = $this->ensureActiveObject($worker);
 
         $worker->advanceRequests()->delete();
         $worker->payments()->delete();
