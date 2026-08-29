@@ -4,6 +4,7 @@ import SoftSelect from '@/Components/ui/SoftSelect';
 import StatusBadge from '@/Components/ui/StatusBadge';
 import AppLayout from '@/Layouts/AppLayout';
 import { formatHours, formatTime } from '@/lib/format';
+import { ensurePushSubscription } from '@/lib/pwa';
 import { Head, router, usePage } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -76,7 +77,7 @@ export default function Home({
     selectedObjectId = null,
     selectedObject = null,
 }) {
-    const { errors = {} } = usePage().props;
+    const { errors = {}, vapidPublicKey } = usePage().props;
     const [arrivalMember, setArrivalMember] = useState(null);
     const [transferMember, setTransferMember] = useState(null);
     const [startedTime, setStartedTime] = useState(currentTimeValue());
@@ -124,13 +125,14 @@ export default function Home({
         setArrivalMember(member);
     };
 
-    const confirmArrival = () => {
+    const confirmArrival = async () => {
         if (!arrivalMember || !selectedObjectId) {
             return;
         }
 
         setFormError(null);
         setBusyMemberId(arrivalMember.id);
+        await ensurePushSubscription(vapidPublicKey);
         router.post(
             route('brigadier.members.time.confirm', arrivalMember.id),
             {
@@ -163,8 +165,9 @@ export default function Home({
         );
     };
 
-    const endShift = (memberId) => {
+    const endShift = async (memberId) => {
         setBusyMemberId(memberId);
+        await ensurePushSubscription(vapidPublicKey);
         router.post(route('brigadier.members.time.end', memberId), {}, {
             preserveScroll: true,
             onFinish: () => setBusyMemberId(null),

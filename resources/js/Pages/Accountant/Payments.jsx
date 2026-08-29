@@ -5,7 +5,8 @@ import SoftDatePicker from '@/Components/ui/SoftDatePicker';
 import SoftSelect from '@/Components/ui/SoftSelect';
 import AppLayout from '@/Layouts/AppLayout';
 import { formatDate, formatMoney } from '@/lib/format';
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import { ensurePushSubscription } from '@/lib/pwa';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Wallet } from '@phosphor-icons/react';
 import { useState } from 'react';
@@ -17,6 +18,7 @@ function todayInputValue() {
 }
 
 export default function Payments({ employees = [], payments = [], closedObjects = [] }) {
+    const vapidPublicKey = usePage().props.vapidPublicKey;
     const [settlementId, setSettlementId] = useState('');
     const [settlementBusy, setSettlementBusy] = useState(false);
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -27,8 +29,9 @@ export default function Payments({ employees = [], payments = [], closedObjects 
         paid_on: todayInputValue(),
     });
 
-    const submit = (e) => {
+    const submit = async (e) => {
         e.preventDefault();
+        await ensurePushSubscription(vapidPublicKey);
         post(route('accountant.payments.store'), {
             onSuccess: () =>
                 reset({
@@ -75,8 +78,9 @@ export default function Payments({ employees = [], payments = [], closedObjects 
                         <button
                             type="button"
                             disabled={!settlementId || settlementBusy}
-                            onClick={() => {
+                            onClick={async () => {
                                 setSettlementBusy(true);
+                                await ensurePushSubscription(vapidPublicKey);
                                 router.post(
                                     route(
                                         'accountant.objects.pay-settlement',

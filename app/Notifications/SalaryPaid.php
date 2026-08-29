@@ -5,19 +5,16 @@ declare(strict_types=1);
 namespace App\Notifications;
 
 use App\Models\Payment;
+use App\Notifications\Concerns\PushesToPwa;
 use Illuminate\Notifications\Notification;
 
 final class SalaryPaid extends Notification
 {
+    use PushesToPwa;
+
     public function __construct(
         private readonly Payment $payment,
     ) {}
-
-    /** @return list<string> */
-    public function via(object $notifiable): array
-    {
-        return ['database', 'broadcast'];
-    }
 
     public function broadcastType(): string
     {

@@ -1,4 +1,5 @@
 import BrandLogo from '@/Components/BrandLogo';
+import EnablePushBanner from '@/Components/EnablePushBanner';
 import NotificationBell from '@/Components/NotificationBell';
 import { RealtimeProvider } from '@/contexts/RealtimeContext';
 import { Link, router, usePage } from '@inertiajs/react';
@@ -334,6 +335,9 @@ export default function AppLayout({ children, title }) {
                 {title && (
                     <p className="sr-only">{title}</p>
                 )}
+                <div className="empty:hidden mb-5">
+                    <EnablePushBanner />
+                </div>
                 {children}
             </main>
             </div>

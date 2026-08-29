@@ -26,12 +26,12 @@
 
         <title inertia>{{ config('app.name', 'Legionis Group') }}</title>
 
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3">
-        <link rel="icon" href="/favicon.ico?v=3" sizes="any">
-        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=3">
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png?v=3">
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3">
-        <link rel="manifest" href="/site.webmanifest?v=3">
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=4">
+        <link rel="icon" href="/favicon.ico?v=4" sizes="any">
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=4">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png?v=4">
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4">
+        <link rel="manifest" href="/site.webmanifest?v=4">
 
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=plus-jakarta-sans:400,500,600,700,800" rel="stylesheet" />

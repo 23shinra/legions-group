@@ -76,7 +76,7 @@ final readonly class TimeTrackingService
         $worker->loadMissing('brigade.brigadier');
         $brigadier = $worker->brigade?->brigadier;
 
-        if ($brigadier !== null) {
+        if ($brigadier !== null && $brigadier->is_active) {
             $brigadier->notify(new ArrivalConfirmationRequested($entry->load('user')));
         }
 
@@ -246,7 +246,7 @@ final readonly class TimeTrackingService
             $worker->notify(new ShiftEnded($fresh));
         }
 
-        if ($brigadier !== null && (int) $brigadier->id !== (int) $actor->id) {
+        if ($brigadier !== null && $brigadier->is_active && (int) $brigadier->id !== (int) $actor->id) {
             $brigadier->notify(new ShiftEnded($fresh));
         }
 
@@ -344,7 +344,7 @@ final readonly class TimeTrackingService
             ->where('is_active', true)
             ->get();
 
-        if ($member->brigade?->brigadier) {
+        if ($member->brigade?->brigadier?->is_active) {
             $recipients->push($member->brigade->brigadier);
         }
 

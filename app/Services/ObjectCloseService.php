@@ -80,7 +80,7 @@ final readonly class ObjectCloseService
                 ->where('is_active', true)
                 ->get();
 
-            if ($fresh?->brigade?->brigadier) {
+            if ($fresh?->brigade?->brigadier?->is_active) {
                 $recipients->push($fresh->brigade->brigadier);
             }
 

@@ -126,11 +126,12 @@ final readonly class AdvanceService
 
         $recipients = User::query()
             ->whereIn('role', [UserRole::Manager, UserRole::Accountant])
+            ->where('is_active', true)
             ->get();
 
         $brigadier = $advance->user?->brigade?->brigadier;
 
-        if ($brigadier !== null) {
+        if ($brigadier !== null && $brigadier->is_active) {
             $recipients = $recipients->push($brigadier)->unique('id');
         }
 
@@ -165,6 +166,7 @@ final readonly class AdvanceService
 
         $accountants = User::query()
             ->where('role', UserRole::Accountant)
+            ->where('is_active', true)
             ->get();
 
         Notification::send($accountants, new AdvanceApprovedForPayment($advance));

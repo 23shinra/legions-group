@@ -59,15 +59,7 @@ final class WorkerController extends Controller
 
     public function endShift(Request $request, TimeTrackingService $time): RedirectResponse
     {
-        $data = $request->validate([
-            'break_minutes' => ['nullable', 'integer', 'min:0', 'max:600'],
-        ]);
-
-        $time->endForWorker(
-            $request->user(),
-            null,
-            (int) ($data['break_minutes'] ?? 0),
-        );
+        $time->endForWorker($request->user());
 
         return back()->with('success', 'Смена завершена.');
     }

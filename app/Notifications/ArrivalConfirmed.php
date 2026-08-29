@@ -6,19 +6,16 @@ namespace App\Notifications;
 
 use App\Models\TimeEntry;
 use App\Models\User;
+use App\Notifications\Concerns\PushesToPwa;
 use Illuminate\Notifications\Notification;
 
 final class ArrivalConfirmed extends Notification
 {
+    use PushesToPwa;
+
     public function __construct(
         private readonly TimeEntry $entry,
     ) {}
-
-    /** @return list<string> */
-    public function via(object $notifiable): array
-    {
-        return ['database', 'broadcast'];
-    }
 
     public function broadcastType(): string
     {

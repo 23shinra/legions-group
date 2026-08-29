@@ -6,21 +6,18 @@ namespace App\Notifications;
 
 use App\Enums\UserRole;
 use App\Models\User;
+use App\Notifications\Concerns\PushesToPwa;
 use Illuminate\Notifications\Notification;
 
 final class AttendanceAlert extends Notification
 {
+    use PushesToPwa;
+
     public function __construct(
         private readonly string $kind,
         private readonly User $worker,
         private readonly string $detail = '',
     ) {}
-
-    /** @return list<string> */
-    public function via(object $notifiable): array
-    {
-        return ['database', 'broadcast'];
-    }
 
     public function broadcastType(): string
     {

@@ -6,6 +6,7 @@ import SoftSelect from '@/Components/ui/SoftSelect';
 import StatusBadge from '@/Components/ui/StatusBadge';
 import AppLayout from '@/Layouts/AppLayout';
 import { formatDate, formatHours, formatMoney } from '@/lib/format';
+import { ensurePushSubscription } from '@/lib/pwa';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Lock, Plus, Trash, UsersThree } from '@phosphor-icons/react';
@@ -21,6 +22,7 @@ export default function Show({
     settlement = null,
 }) {
     const flash = usePage().props.flash ?? {};
+    const vapidPublicKey = usePage().props.vapidPublicKey;
     const isClosed = Boolean(object?.closed_at) || object?.status === 'closed';
     const settlementData = settlement ?? object?.settlement;
     const [memberId, setMemberId] = useState('');
@@ -34,8 +36,9 @@ export default function Show({
         status: object?.status ?? 'active',
     });
 
-    const handleClose = () => {
+    const handleClose = async () => {
         if (confirm('Закрыть объект? Это действие нельзя отменить.')) {
+            await ensurePushSubscription(vapidPublicKey);
             router.post(route('manager.objects.close', object.id));
         }
     };

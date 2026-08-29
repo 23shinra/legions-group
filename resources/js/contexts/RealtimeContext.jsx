@@ -1,4 +1,4 @@
-import { showLocalNotification } from '@/lib/pwa';
+import { claimBanner, showLocalNotification, subscribeToPush } from '@/lib/pwa';
 import { router, usePage } from '@inertiajs/react';
 import {
     createContext,
@@ -69,6 +69,19 @@ function notificationTitle(payload) {
     return 'Legionis Group';
 }
 
+function bannerTag(item) {
+    const type = item?.type ?? item?.event ?? 'legionis';
+    const id =
+        item?.advance_id ??
+        item?.entry_id ??
+        item?.payment_id ??
+        item?.object_id ??
+        item?.id ??
+        '';
+
+    return id ? `${type}-${id}` : type;
+}
+
 function normalizeNotification(raw) {
     const data = raw?.data && typeof raw.data === 'object' ? raw.data : raw;
 
@@ -78,7 +91,27 @@ function normalizeNotification(raw) {
         message: data.message ?? raw.message ?? '',
         url: data.url ?? raw.url ?? null,
         created_at: raw.created_at ?? data.created_at ?? new Date().toISOString(),
+        tag: bannerTag(data),
     };
+}
+
+function revealOsBanner(item, payload = item) {
+    if (typeof document !== 'undefined' && document.hidden) {
+        return;
+    }
+
+    const tag = item.tag ?? bannerTag(item);
+
+    if (!claimBanner(tag || item.id || item.message)) {
+        return;
+    }
+
+    showLocalNotification({
+        title: notificationTitle(payload),
+        body: item.message,
+        url: item.url ?? '/',
+        tag,
+    });
 }
 
 function echoAvailable() {
@@ -92,7 +125,7 @@ function echoConnected() {
 }
 
 export function RealtimeProvider({ children }) {
-    const { auth, notifications: initial = [] } = usePage().props;
+    const { auth, notifications: initial = [], vapidPublicKey } = usePage().props;
     const userId = auth?.user?.id;
     const [notifications, setNotifications] = useState(initial);
     const [socketConnected, setSocketConnected] = useState(
@@ -102,6 +135,16 @@ export function RealtimeProvider({ children }) {
     const reloadTimer = useRef(null);
     const resyncTimer = useRef(null);
     const wasDisconnected = useRef(false);
+
+    useEffect(() => {
+        if (!userId || !vapidPublicKey) {
+            return;
+        }
+
+        if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+            subscribeToPush(vapidPublicKey).catch(() => {});
+        }
+    }, [userId, vapidPublicKey]);
 
     const requestReload = useCallback(() => {
         if (reloadTimer.current) {
@@ -189,13 +232,7 @@ export function RealtimeProvider({ children }) {
 
             seenIds.current.add(item.id);
             setNotifications((previous) => [item, ...previous].slice(0, 20));
-
-            showLocalNotification({
-                title: notificationTitle(payload),
-                body: item.message,
-                url: item.url ?? '/',
-                tag: item.id,
-            });
+            revealOsBanner(item, payload);
         });
 
         const onStateChange = (states) => {

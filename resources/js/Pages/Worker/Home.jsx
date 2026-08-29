@@ -5,7 +5,8 @@ import StatPill from '@/Components/ui/StatPill';
 import StatusBadge from '@/Components/ui/StatusBadge';
 import AppLayout from '@/Layouts/AppLayout';
 import { formatDate, formatHours, formatMoney, formatTime } from '@/lib/format';
-import { Head, Link, router } from '@inertiajs/react';
+import { ensurePushSubscription } from '@/lib/pwa';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import {
     ArrowRight,
@@ -60,9 +61,9 @@ export default function Home({
     const isWorking = Boolean(activeEntry);
     const isAwaiting = Boolean(pendingEntry);
     const user = auth?.user;
+    const vapidPublicKey = usePage().props.vapidPublicKey;
     const [advanceOpen, setAdvanceOpen] = useState(false);
     const [busy, setBusy] = useState(false);
-    const [breakMinutes, setBreakMinutes] = useState('0');
     const [endOpen, setEndOpen] = useState(false);
 
     const markArrival = async () => {
@@ -71,6 +72,7 @@ export default function Home({
         }
 
         setBusy(true);
+        await ensurePushSubscription(vapidPublicKey);
         // GPS опционален: ждём максимум ~1.2с, иначе отправляем сразу без координат.
         const coords = await readGeolocation(1200);
         router.post(route('worker.time.arrival'), coords, {
@@ -79,21 +81,21 @@ export default function Home({
         });
     };
 
-    const endShift = () => {
+    const endShift = async () => {
         if (busy || !isWorking) {
             return;
         }
 
         setBusy(true);
+        await ensurePushSubscription(vapidPublicKey);
         router.post(
             route('worker.time.end'),
-            { break_minutes: Number.parseInt(breakMinutes, 10) || 0 },
+            {},
             {
                 preserveScroll: true,
                 onFinish: () => {
                     setBusy(false);
                     setEndOpen(false);
-                    setBreakMinutes('0');
                 },
             },
         );
@@ -178,21 +180,9 @@ export default function Home({
 
                             {isWorking && endOpen && (
                                 <div className="mt-4 space-y-3 rounded-2xl bg-[var(--surface-muted)] p-4 ring-1 ring-[var(--bezel-ring)]">
-                                    <label className="block">
-                                        <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">
-                                            Перерыв (минут)
-                                        </span>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            max="600"
-                                            value={breakMinutes}
-                                            onChange={(event) =>
-                                                setBreakMinutes(event.target.value)
-                                            }
-                                            className="w-full rounded-2xl border-0 bg-[var(--surface)] px-4 py-3 text-base font-semibold text-[var(--ink)] ring-1 ring-[var(--bezel-ring)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-                                        />
-                                    </label>
+                                    <p className="text-sm text-[var(--muted)]">
+                                        Завершить смену сейчас?
+                                    </p>
                                     <div className="flex flex-col gap-2 sm:flex-row-reverse">
                                         <button
                                             type="button"

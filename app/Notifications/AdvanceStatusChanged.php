@@ -6,19 +6,16 @@ namespace App\Notifications;
 
 use App\Enums\AdvanceStatus;
 use App\Models\AdvanceRequest;
+use App\Notifications\Concerns\PushesToPwa;
 use Illuminate\Notifications\Notification;
 
 final class AdvanceStatusChanged extends Notification
 {
+    use PushesToPwa;
+
     public function __construct(
         private readonly AdvanceRequest $advance,
     ) {}
-
-    /** @return list<string> */
-    public function via(object $notifiable): array
-    {
-        return ['database', 'broadcast'];
-    }
 
     public function broadcastType(): string
     {

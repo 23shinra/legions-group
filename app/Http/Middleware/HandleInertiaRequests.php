@@ -59,6 +59,8 @@ class HandleInertiaRequests extends Middleware
                     ->values()
                 : [],
             'payroll' => \App\Support\PayDefaults::toArray(),
+            'vapidPublicKey' => config('webpush.vapid.public_key'),
+            'hasPushSubscription' => (bool) $request->user()?->pushSubscriptions()->exists(),
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),

@@ -1,11 +1,13 @@
 import IslandButton from '@/Components/ui/IslandButton';
 import { formatMoney } from '@/lib/format';
-import { useForm } from '@inertiajs/react';
+import { ensurePushSubscription } from '@/lib/pwa';
+import { useForm, usePage } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowRight, Bank, Money, X } from '@phosphor-icons/react';
 import { useEffect } from 'react';
 
 export default function MarkAdvancePaidModal({ open, onClose, advance }) {
+    const vapidPublicKey = usePage().props.vapidPublicKey;
     const { data, setData, post, processing, errors, reset, clearErrors } =
         useForm({
             payment_method: 'transfer',
@@ -29,12 +31,13 @@ export default function MarkAdvancePaidModal({ open, onClose, advance }) {
         }
     }, [open, reset, clearErrors]);
 
-    const submit = (e) => {
+    const submit = async (e) => {
         e.preventDefault();
         if (!advance?.id) {
             return;
         }
 
+        await ensurePushSubscription(vapidPublicKey);
         post(route('accountant.advances.paid', advance.id), {
             preserveScroll: true,
             forceFormData: true,

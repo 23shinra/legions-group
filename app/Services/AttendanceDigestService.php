@@ -92,7 +92,7 @@ final readonly class AttendanceDigestService
         $recipients = collect();
         $brigadier = $worker->brigade?->brigadier;
 
-        if ($brigadier !== null) {
+        if ($brigadier !== null && $brigadier->is_active) {
             $recipients->push($brigadier);
         }
 

@@ -7,19 +7,16 @@ namespace App\Notifications;
 use App\Enums\UserRole;
 use App\Models\AdvanceRequest;
 use App\Models\User;
+use App\Notifications\Concerns\PushesToPwa;
 use Illuminate\Notifications\Notification;
 
 final class NewAdvanceRequest extends Notification
 {
+    use PushesToPwa;
+
     public function __construct(
         private readonly AdvanceRequest $advance,
     ) {}
-
-    /** @return list<string> */
-    public function via(object $notifiable): array
-    {
-        return ['database', 'broadcast'];
-    }
 
     public function broadcastType(): string
     {

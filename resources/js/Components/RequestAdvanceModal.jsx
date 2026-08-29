@@ -1,6 +1,7 @@
 import IslandButton from '@/Components/ui/IslandButton';
 import { formatHours, formatMoney } from '@/lib/format';
-import { useForm } from '@inertiajs/react';
+import { ensurePushSubscription } from '@/lib/pwa';
+import { useForm, usePage } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowRight, Clock, WarningCircle, X } from '@phosphor-icons/react';
 import { useEffect, useMemo } from 'react';
@@ -17,6 +18,7 @@ export default function RequestAdvanceModal({
     const maxAmount = Number(eligibility.available_for_advance ?? 0);
     const earned = Number(eligibility.accrued ?? 0);
 
+    const vapidPublicKey = usePage().props.vapidPublicKey;
     const { data, setData, post, processing, errors, reset, clearErrors } =
         useForm({
             amount: '',
@@ -56,11 +58,13 @@ export default function RequestAdvanceModal({
         }
     }, [open]);
 
-    const submit = (e) => {
+    const submit = async (e) => {
         e.preventDefault();
         if (!canRequest || clientError) {
             return;
         }
+
+        await ensurePushSubscription(vapidPublicKey);
 
         post(route('worker.advances.store'), {
             preserveScroll: true,

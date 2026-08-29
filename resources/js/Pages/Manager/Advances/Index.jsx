@@ -6,7 +6,8 @@ import SoftSelect from '@/Components/ui/SoftSelect';
 import StatusBadge from '@/Components/ui/StatusBadge';
 import AppLayout from '@/Layouts/AppLayout';
 import { formatDate, formatHours, formatMoney } from '@/lib/format';
-import { Head, router } from '@inertiajs/react';
+import { ensurePushSubscription } from '@/lib/pwa';
+import { Head, router, usePage } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check, CurrencyCircleDollar, DownloadSimple, X } from '@phosphor-icons/react';
 import { useEffect, useRef, useState } from 'react';
@@ -234,6 +235,7 @@ export default function Index({
     historyAdvances = [],
     filters = {},
 }) {
+    const vapidPublicKey = usePage().props.vapidPublicKey;
     const [tab, setTab] = useState('pending');
     const [month, setMonth] = useState(filters.month ?? '');
     const [status, setStatus] = useState(filters.status ?? '');
@@ -282,12 +284,13 @@ export default function Index({
         toastTimer.current = setTimeout(() => setToast(null), 2600);
     };
 
-    const decide = (id, decision) => {
+    const decide = async (id, decision) => {
         if (busyId) {
             return;
         }
 
         setBusyId(id);
+        await ensurePushSubscription(vapidPublicKey);
 
         const routeName =
             decision === 'approve'

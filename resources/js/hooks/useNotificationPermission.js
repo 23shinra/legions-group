@@ -2,7 +2,9 @@ import {
     notificationsSupported,
     registerServiceWorker,
     showLocalNotification,
+    subscribeToPush,
 } from '@/lib/pwa';
+import { usePage } from '@inertiajs/react';
 import { useCallback, useEffect, useState } from 'react';
 
 function readPermission() {
@@ -14,6 +16,7 @@ function readPermission() {
 }
 
 export default function useNotificationPermission() {
+    const vapidPublicKey = usePage().props.vapidPublicKey;
     const [permission, setPermission] = useState(readPermission);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState(null);
@@ -21,7 +24,11 @@ export default function useNotificationPermission() {
     useEffect(() => {
         setPermission(readPermission());
         registerServiceWorker();
-    }, []);
+
+        if (Notification.permission === 'granted') {
+            subscribeToPush(vapidPublicKey).catch(() => {});
+        }
+    }, [vapidPublicKey]);
 
     const requestPermission = useCallback(async () => {
         if (!notificationsSupported()) {
@@ -39,6 +46,7 @@ export default function useNotificationPermission() {
             setPermission(result);
 
             if (result === 'granted') {
+                await subscribeToPush(vapidPublicKey);
                 await showLocalNotification({
                     title: 'Legionis Group',
                     body: 'Уведомления включены',
@@ -57,7 +65,7 @@ export default function useNotificationPermission() {
         } finally {
             setBusy(false);
         }
-    }, []);
+    }, [vapidPublicKey]);
 
     return {
         permission,

@@ -20,8 +20,9 @@ fi
 
 git add -A
 
-# Drop secrets / local DB if staged by mistake
-git reset HEAD -- .env .env.* '*.sqlite' '*.sqlite-journal' 2>/dev/null || true
+# Drop secrets / local DB if staged by mistake.
+# Do not use `.env.*` — it also unstages `.env.example`.
+git reset HEAD -- .env .env.backup .env.production '*.sqlite' '*.sqlite-journal' 2>/dev/null || true
 
 if git diff --cached --quiet; then
   echo '{}'
@@ -34,9 +35,11 @@ git commit -m "$msg" >/dev/null 2>&1 || {
   exit 0
 }
 
-if git remote get-url origin >/dev/null 2>&1; then
-  git push origin HEAD >/dev/null 2>&1 || true
-fi
+for remote in origin github; do
+  if git remote get-url "$remote" >/dev/null 2>&1; then
+    git push "$remote" HEAD >/dev/null 2>&1 || true
+  fi
+done
 
 echo '{}'
 exit 0

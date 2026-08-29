@@ -1,6 +1,5 @@
-/* Legionis Group PWA service worker v3 */
-const SW_VERSION = 'legionis-v3';
-self.addEventListener('install', (event) => {
+/* Legionis Group PWA service worker v5 */
+self.addEventListener('install', () => {
     self.skipWaiting();
 });
 
@@ -33,16 +32,37 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 self.addEventListener('push', (event) => {
+    event.waitUntil(showPushNotification(event));
+});
+
+async function showPushNotification(event) {
+    const windowClients = await self.clients.matchAll({
+        type: 'window',
+        includeUncontrolled: true,
+    });
+
+    if (windowClients.some((client) => client.visibilityState === 'visible')) {
+        return;
+    }
+
     let payload = {
         title: 'Legionis Group',
         body: 'Новое уведомление',
         url: '/',
+        icon: '/icon-192.png?v=4',
+        badge: '/favicon-32.png?v=4',
+        tag: 'legionis',
     };
 
     try {
         if (event.data) {
             const data = event.data.json();
-            payload = { ...payload, ...data };
+            payload = {
+                ...payload,
+                ...data,
+                url: data?.data?.url || data?.url || payload.url,
+                tag: data?.tag || data?.data?.type || payload.tag,
+            };
         }
     } catch {
         try {
@@ -52,27 +72,12 @@ self.addEventListener('push', (event) => {
         }
     }
 
-    event.waitUntil(
-        self.registration.showNotification(payload.title, {
-            body: payload.body,
-            icon: '/icon-192.png?v=3',
-            badge: '/favicon-32.png?v=3',
-            data: { url: payload.url || '/' },
-        }),
-    );
-});
-
-self.addEventListener('message', (event) => {
-    const data = event.data || {};
-
-    if (data.type === 'SHOW_NOTIFICATION') {
-        event.waitUntil(
-            self.registration.showNotification(data.title || 'Legionis Group', {
-                body: data.body || '',
-                icon: '/icon-192.png?v=3',
-                badge: '/favicon-32.png?v=3',
-                data: { url: data.url || '/' },
-            }),
-        );
-    }
-});
+    await self.registration.showNotification(payload.title, {
+        body: payload.body,
+        icon: payload.icon || '/icon-192.png?v=4',
+        badge: payload.badge || '/favicon-32.png?v=4',
+        tag: payload.tag,
+        renotify: false,
+        data: { url: payload.url || '/' },
+    });
+}
