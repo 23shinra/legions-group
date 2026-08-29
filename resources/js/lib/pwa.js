@@ -25,6 +25,7 @@ export async function showLocalNotification({
     title = 'Legionis Group',
     body = '',
     url = '/',
+    tag = undefined,
 } = {}) {
     if (!notificationsSupported() || Notification.permission !== 'granted') {
         return false;
@@ -37,6 +38,7 @@ export async function showLocalNotification({
             body,
             icon: '/icon-192.png?v=3',
             badge: '/favicon-32.png?v=3',
+            tag,
             data: { url },
         });
         return true;
@@ -44,6 +46,6 @@ export async function showLocalNotification({
 
     // Fallback when SW is unavailable
     // eslint-disable-next-line no-new
-    new Notification(title, { body, icon: '/icon-192.png?v=3' });
+    new Notification(title, { body, icon: '/icon-192.png?v=3', tag });
     return true;
 }

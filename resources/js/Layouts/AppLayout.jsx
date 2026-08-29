@@ -1,5 +1,6 @@
 import BrandLogo from '@/Components/BrandLogo';
 import NotificationBell from '@/Components/NotificationBell';
+import { RealtimeProvider } from '@/contexts/RealtimeContext';
 import { Link, router, usePage } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -117,7 +118,8 @@ export default function AppLayout({ children, title }) {
     };
 
     return (
-        <div className="relative min-h-[100dvh] bg-[var(--bg)]">
+        <RealtimeProvider>
+            <div className="relative min-h-[100dvh] bg-[var(--bg)]">
             <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(ellipse_at_20%_0%,rgba(0,0,0,0.04),transparent_50%)]" />
 
             <nav className="fixed inset-x-0 top-0 z-40 px-2 pt-[max(0.5rem,var(--safe-top))] sm:px-3 sm:pt-4 lg:px-4 lg:pt-5">
@@ -334,6 +336,7 @@ export default function AppLayout({ children, title }) {
                 )}
                 {children}
             </main>
-        </div>
+            </div>
+        </RealtimeProvider>
     );
 }

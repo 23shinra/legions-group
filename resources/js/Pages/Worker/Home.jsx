@@ -18,7 +18,7 @@ import {
     UsersThree,
     Wallet,
 } from '@phosphor-icons/react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 function readGeolocation(timeoutMs = 1500) {
     return new Promise((resolve) => {
@@ -64,22 +64,6 @@ export default function Home({
     const [busy, setBusy] = useState(false);
     const [breakMinutes, setBreakMinutes] = useState('0');
     const [endOpen, setEndOpen] = useState(false);
-
-    useEffect(() => {
-        if (!isAwaiting) {
-            return undefined;
-        }
-
-        const timer = window.setInterval(() => {
-            router.reload({
-                only: ['activeEntry', 'pendingEntry', 'todayObject'],
-                preserveScroll: true,
-                preserveState: true,
-            });
-        }, 3000);
-
-        return () => window.clearInterval(timer);
-    }, [isAwaiting]);
 
     const markArrival = async () => {
         if (busy || isWorking || isAwaiting || !todayObject) {
