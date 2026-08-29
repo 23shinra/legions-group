@@ -18,12 +18,12 @@ final class SyncRosterLoginsCommandTest extends TestCase
     {
         $this->seed();
 
-        User::query()->where('email', 'islam.ashirov')->update([
+        $managerId = (int) User::query()->where('name', 'Аширов Ислам')->value('id');
+
+        User::query()->whereKey($managerId)->update([
             'email' => 'manager',
             'password' => Hash::make('123'),
         ]);
-
-        $managerId = (int) User::query()->where('name', 'Аширов Ислам')->value('id');
 
         $this->artisan('roster:sync-logins')->assertSuccessful();
 
@@ -33,5 +33,16 @@ final class SyncRosterLoginsCommandTest extends TestCase
         $this->assertSame('Ислам', $manager->first_name);
         $this->assertSame('Аширов', $manager->last_name);
         $this->assertTrue(Hash::check(RosterInstaller::INITIAL_PASSWORD, (string) $manager->password));
+    }
+
+    public function test_sync_logins_falls_back_to_legacy_worker_email(): void
+    {
+        $this->seed();
+
+        User::query()->where('email', 'eldanis.aytaev')->update(['email' => 'worker5']);
+
+        $this->artisan('roster:sync-logins')->assertSuccessful();
+
+        $this->assertSame('eldanis.aytaev', User::query()->where('name', 'Айтаев Эльданис')->value('email'));
     }
 }

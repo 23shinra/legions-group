@@ -7,6 +7,7 @@ namespace App\Console\Commands;
 use App\Models\User;
 use App\Services\RosterInstaller;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Auth;
 
 final class SyncRosterLoginsCommand extends Command
 {
@@ -18,12 +19,12 @@ final class SyncRosterLoginsCommand extends Command
     {
         if ($this->option('dry-run')) {
             foreach (RosterInstaller::accounts() as $entry) {
-                $exists = User::query()->where('name', $entry['name'])->exists();
+                $user = $installer->findUserForEntry($entry);
                 $this->line(sprintf(
                     '%s → %s (%s)',
                     $entry['name'],
                     $entry['login'],
-                    $exists ? 'found' : 'MISSING',
+                    $user !== null ? "found as {$user->email}" : 'MISSING',
                 ));
             }
 
@@ -33,6 +34,31 @@ final class SyncRosterLoginsCommand extends Command
         $updated = $installer->syncLoginsInPlace();
 
         $this->info("Updated {$updated} accounts.");
+
+        foreach (RosterInstaller::accounts() as $entry) {
+            $authOk = Auth::attempt([
+                'email' => $entry['login'],
+                'password' => RosterInstaller::INITIAL_PASSWORD,
+            ]);
+            Auth::logout();
+
+            $this->line(sprintf(
+                '%s / %s: %s',
+                $entry['login'],
+                RosterInstaller::INITIAL_PASSWORD,
+                $authOk ? 'OK' : 'FAIL',
+            ));
+        }
+
+        $missing = collect(RosterInstaller::accounts())
+            ->filter(fn (array $entry): bool => $installer->findUserForEntry($entry) === null)
+            ->pluck('name');
+
+        if ($missing->isNotEmpty()) {
+            $this->warn('Missing: '.$missing->implode(', '));
+        }
+
+        $this->info('Users in DB: '.User::query()->count());
 
         return self::SUCCESS;
     }

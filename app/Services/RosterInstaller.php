@@ -11,7 +11,6 @@ use App\Models\SalaryHistory;
 use App\Models\User;
 use App\Support\PayDefaults;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 
 final class RosterInstaller
@@ -190,7 +189,6 @@ final class RosterInstaller
 
     public function seed(): void
     {
-        $password = Hash::make(self::INITIAL_PASSWORD);
         $hourlyRate = PayDefaults::hourlyRate();
         $brigadeNames = [
             'Бригада Кадырова А.',
@@ -201,13 +199,11 @@ final class RosterInstaller
 
         $manager = $this->createAccount(
             collect(self::accounts())->firstWhere('role', UserRole::Manager),
-            $password,
             $hourlyRate,
         );
 
         $this->createAccount(
             collect(self::accounts())->firstWhere('role', UserRole::Accountant),
-            $password,
             $hourlyRate,
         );
 
@@ -219,7 +215,7 @@ final class RosterInstaller
                 continue;
             }
 
-            $brigadier = $this->createAccount($entry, $password, $hourlyRate);
+            $brigadier = $this->createAccount($entry, $hourlyRate);
 
             $brigade = Brigade::query()->create([
                 'name' => $brigadeNames[$brigadierIndex],
@@ -250,7 +246,7 @@ final class RosterInstaller
             $brigade = $brigades[$workerIndex % count($brigades)] ?? null;
             $workerIndex++;
 
-            $worker = $this->createAccount($entry, $password, $hourlyRate, $brigade?->id);
+            $worker = $this->createAccount($entry, $hourlyRate, $brigade?->id);
 
             SalaryHistory::query()->create([
                 'user_id' => $worker->id,
@@ -272,7 +268,7 @@ final class RosterInstaller
      *     role: UserRole
      * }|null  $entry
      */
-    private function createAccount(?array $entry, string $password, float $hourlyRate, ?int $brigadeId = null): User
+    private function createAccount(?array $entry, float $hourlyRate, ?int $brigadeId = null): User
     {
         if ($entry === null) {
             throw new \InvalidArgumentException('Roster entry is missing.');
@@ -283,7 +279,7 @@ final class RosterInstaller
             'first_name' => $entry['first_name'],
             'last_name' => $entry['last_name'],
             'email' => $entry['login'],
-            'password' => $password,
+            'password' => self::INITIAL_PASSWORD,
             'role' => $entry['role'],
             'brigade_id' => $brigadeId,
             'position' => match ($entry['role']) {
@@ -305,11 +301,10 @@ final class RosterInstaller
 
     public function syncLoginsInPlace(): int
     {
-        $password = Hash::make(self::INITIAL_PASSWORD);
         $updated = 0;
 
         foreach (self::accounts() as $entry) {
-            $user = User::query()->where('name', $entry['name'])->first();
+            $user = $this->findUserForEntry($entry);
 
             if ($user === null) {
                 continue;
@@ -319,13 +314,77 @@ final class RosterInstaller
                 'first_name' => $entry['first_name'],
                 'last_name' => $entry['last_name'],
                 'email' => $entry['login'],
-                'password' => $password,
+                'password' => self::INITIAL_PASSWORD,
+                'is_active' => true,
             ]);
 
             $updated++;
         }
 
         return $updated;
+    }
+
+    /**
+     * @param  array{
+     *     login: string,
+     *     name: string,
+     *     first_name: string,
+     *     last_name: string|null,
+     *     role: UserRole
+     * }  $entry
+     */
+    public function findUserForEntry(array $entry): ?User
+    {
+        $user = User::query()->where('name', $entry['name'])->first();
+
+        if ($user !== null) {
+            return $user;
+        }
+
+        $user = User::query()->where('email', $entry['login'])->first();
+
+        if ($user !== null) {
+            return $user;
+        }
+
+        foreach (self::legacyEmailsFor($entry['login']) as $legacyEmail) {
+            $user = User::query()->where('email', $legacyEmail)->first();
+
+            if ($user !== null) {
+                return $user;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function legacyEmailsFor(string $login): array
+    {
+        return match ($login) {
+            'islam.ashirov' => ['manager'],
+            'ramilya.parhatova' => ['accountant'],
+            'abdykahar.kadyrov' => ['brigadier1'],
+            'ilyar.abdurashitov' => ['brigadier2'],
+            'alizhan.nurmatov' => ['brigadier3'],
+            'tursun.kadyrov' => ['brigadier4'],
+            'dilmurat.ashirov' => ['worker1'],
+            'abdulla.nuruzov' => ['worker2'],
+            'rishat.sadyrov' => ['worker3'],
+            'dilya.iziyarov' => ['worker4'],
+            'eldanis.aytaev' => ['worker5'],
+            'alibek.alimbekov' => ['worker6'],
+            'roma' => ['worker7'],
+            'dilmurat.akhmetov' => ['worker8'],
+            'amranzhan.turganov' => ['worker9'],
+            'arafat.turganov' => ['worker10'],
+            'ilyar.nurmatov' => ['worker11'],
+            'konstantin.chernyshov' => ['worker12'],
+            'dilmurat.abdurakhmanov' => ['worker13'],
+            default => [],
+        };
     }
 
     public function replace(): void
