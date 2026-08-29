@@ -6,6 +6,11 @@ return [
             'Inertia\\ServiceProvider',
         ],
     ],
+    'laravel-notification-channels/webpush' => [
+        'providers' => [
+            'NotificationChannels\\WebPush\\WebPushServiceProvider',
+        ],
+    ],
     'laravel/reverb' => [
         'providers' => [
             'Laravel\\Reverb\\ApplicationManagerServiceProvider',

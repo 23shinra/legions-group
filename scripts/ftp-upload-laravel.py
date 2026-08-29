@@ -54,7 +54,7 @@ SKIP_FILE_NAMES = {
     ".deploy-root.htaccess",
 }
 SKIP_SUFFIXES = {".sqlite-journal", ".sqlite", ".log"}
-ALWAYS = {".env", ".htaccess", "artisan"}
+ALWAYS = {".env", ".htaccess", "artisan", "manifest.json", "sw.js", "site.webmanifest"}
 
 
 def should_skip(rel: Path) -> bool:
