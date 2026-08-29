@@ -26,7 +26,7 @@ final class DatabaseSeeder extends Seeder
         $password = Hash::make('123');
 
         $manager = User::query()->create([
-            'name' => 'Руководитель Алиев',
+            'name' => 'Аширов Ислам',
             'email' => 'manager',
             'password' => $password,
             'phone' => '+77001112233',
@@ -39,7 +39,7 @@ final class DatabaseSeeder extends Seeder
         ]);
 
         $accountant = User::query()->create([
-            'name' => 'Бухгалтер Сатыбалдиева',
+            'name' => 'Пархатова Рамиля',
             'email' => 'accountant',
             'password' => $password,
             'phone' => '+77004445566',
@@ -107,7 +107,7 @@ final class DatabaseSeeder extends Seeder
                 'phone' => '+7702'.str_pad((string) ($i + 1), 7, '0', STR_PAD_LEFT),
                 'role' => UserRole::Worker,
                 'brigade_id' => $brigade->id,
-                'position' => fake()->randomElement(['Рабочий', 'Монтажник', 'Бетонщик', 'Разнорабочий']),
+                'position' => fake()->randomElement(['Строитель', 'Монтажник', 'Бетонщик']),
                 'pay_type' => PayType::Hourly,
                 'rate' => $rate,
                 'max_advance' => fake()->randomElement([30000, 40000, 50000, 60000]),
@@ -145,6 +145,7 @@ final class DatabaseSeeder extends Seeder
                 'address' => 'г. Алматы, ул. Примерная '.(($i + 1) * 10),
                 'start_date' => now()->subDays(20)->toDateString(),
                 'planned_end_date' => now()->addDays(30)->toDateString(),
+                'work_days' => 50,
                 'brigade_id' => $brigade->id,
                 'status' => ObjectStatus::Active,
             ]);
@@ -207,19 +208,6 @@ final class DatabaseSeeder extends Seeder
                 ]);
             }
 
-            // ~60% currently on site today
-            if (fake()->boolean(60)) {
-                $startedAt = now()->startOfDay()->setTime(fake()->numberBetween(7, 9), fake()->randomElement([0, 15, 30]));
-                TimeEntry::query()->create([
-                    'user_id' => $person->id,
-                    'brigade_id' => $brigadeId,
-                    'work_object_id' => $object->id,
-                    'started_at' => $startedAt,
-                    'ended_at' => null,
-                    'break_minutes' => 0,
-                    'worked_minutes' => 0,
-                ]);
-            }
         }
 
         $advanceComments = [

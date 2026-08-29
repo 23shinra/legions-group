@@ -1,24 +1,43 @@
 import BezelCard from '@/Components/ui/BezelCard';
 import IslandButton from '@/Components/ui/IslandButton';
 import PageHeader from '@/Components/ui/PageHeader';
+import SoftDatePicker from '@/Components/ui/SoftDatePicker';
+import SoftSelect from '@/Components/ui/SoftSelect';
 import AppLayout from '@/Layouts/AppLayout';
 import { formatDate, formatMoney } from '@/lib/format';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Wallet } from '@phosphor-icons/react';
+import { useState } from 'react';
 
-export default function Payments({ employees = [], payments = [] }) {
+function todayInputValue() {
+    const now = new Date();
+
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
+
+export default function Payments({ employees = [], payments = [], closedObjects = [] }) {
+    const [settlementId, setSettlementId] = useState('');
+    const [settlementBusy, setSettlementBusy] = useState(false);
     const { data, setData, post, processing, errors, reset } = useForm({
         user_id: '',
         amount: '',
         period: '',
         comment: '',
+        paid_on: todayInputValue(),
     });
 
     const submit = (e) => {
         e.preventDefault();
         post(route('accountant.payments.store'), {
-            onSuccess: () => reset(),
+            onSuccess: () =>
+                reset({
+                    user_id: '',
+                    amount: '',
+                    period: '',
+                    comment: '',
+                    paid_on: todayInputValue(),
+                }),
         });
     };
 
@@ -31,6 +50,52 @@ export default function Payments({ employees = [], payments = [] }) {
                 title="Выплаты"
                 subtitle="Оформление выплат и история"
             />
+
+            {closedObjects.length > 0 && (
+                <BezelCard className="mb-6" padding="p-5">
+                    <h2 className="mb-3 font-bold">Выплатить остатки по закрытому объекту</h2>
+                    <div className="flex flex-col gap-3 sm:flex-row">
+                        <SoftSelect
+                            className="flex-1"
+                            value={settlementId}
+                            onChange={setSettlementId}
+                            placeholder="Выберите объект"
+                            options={[
+                                { value: '', label: 'Выберите объект' },
+                                ...closedObjects.map((object) => ({
+                                    value: object.id,
+                                    label: `${object.name}${
+                                        object.settlement?.total_remaining != null
+                                            ? ` · ${formatMoney(object.settlement.total_remaining)}`
+                                            : ''
+                                    }`,
+                                })),
+                            ]}
+                        />
+                        <button
+                            type="button"
+                            disabled={!settlementId || settlementBusy}
+                            onClick={() => {
+                                setSettlementBusy(true);
+                                router.post(
+                                    route(
+                                        'accountant.objects.pay-settlement',
+                                        settlementId,
+                                    ),
+                                    {},
+                                    {
+                                        preserveScroll: true,
+                                        onFinish: () => setSettlementBusy(false),
+                                    },
+                                );
+                            }}
+                            className="rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-[var(--bg)] disabled:opacity-50"
+                        >
+                            {settlementBusy ? 'Выплата…' : 'Выплатить остатки'}
+                        </button>
+                    </div>
+                </BezelCard>
+            )}
 
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
                 <motion.div
@@ -50,20 +115,20 @@ export default function Payments({ employees = [], payments = [] }) {
                                 <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.15em] text-[var(--muted)]">
                                     Сотрудник
                                 </label>
-                                <select
+                                <SoftSelect
                                     value={data.user_id}
-                                    onChange={(e) => setData('user_id', e.target.value)}
-                                    className="w-full rounded-2xl border-0 bg-[var(--surface-muted)] px-4 py-3.5 text-[var(--ink)] outline-none ring-1 ring-[var(--bezel-ring)] transition-fluid focus:ring-2 focus:ring-[var(--accent)]"
-                                >
-                                    <option value="">Выберите сотрудника</option>
-                                    {employees.map((emp) => (
-                                        <option key={emp.id} value={emp.id}>
-                                            {emp.name}
-                                        </option>
-                                    ))}
-                                </select>
+                                    onChange={(next) => setData('user_id', next)}
+                                    placeholder="Выберите сотрудника"
+                                    options={[
+                                        { value: '', label: 'Выберите сотрудника' },
+                                        ...employees.map((emp) => ({
+                                            value: emp.id,
+                                            label: emp.name,
+                                        })),
+                                    ]}
+                                />
                                 {errors.user_id && (
-                                    <p className="mt-2 text-sm text-neutral-600">{errors.user_id}</p>
+                                    <p className="mt-2 text-sm text-[var(--muted)]">{errors.user_id}</p>
                                 )}
                             </div>
 
@@ -79,7 +144,20 @@ export default function Payments({ employees = [], payments = [] }) {
                                     className="w-full rounded-2xl border-0 bg-[var(--surface-muted)] px-4 py-3.5 text-lg font-semibold outline-none ring-1 ring-[var(--bezel-ring)] transition-fluid focus:ring-2 focus:ring-[var(--accent)]"
                                 />
                                 {errors.amount && (
-                                    <p className="mt-2 text-sm text-neutral-600">{errors.amount}</p>
+                                    <p className="mt-2 text-sm text-[var(--muted)]">{errors.amount}</p>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.15em] text-[var(--muted)]">
+                                    Дата выплаты
+                                </label>
+                                <SoftDatePicker
+                                    value={data.paid_on}
+                                    onChange={(next) => setData('paid_on', next)}
+                                />
+                                {errors.paid_on && (
+                                    <p className="mt-2 text-sm text-[var(--muted)]">{errors.paid_on}</p>
                                 )}
                             </div>
 
@@ -95,7 +173,7 @@ export default function Payments({ employees = [], payments = [] }) {
                                     className="w-full rounded-2xl border-0 bg-[var(--surface-muted)] px-4 py-3.5 outline-none ring-1 ring-[var(--bezel-ring)] transition-fluid focus:ring-2 focus:ring-[var(--accent)]"
                                 />
                                 {errors.period && (
-                                    <p className="mt-2 text-sm text-neutral-600">{errors.period}</p>
+                                    <p className="mt-2 text-sm text-[var(--muted)]">{errors.period}</p>
                                 )}
                             </div>
 
@@ -125,11 +203,18 @@ export default function Payments({ employees = [], payments = [] }) {
 
                 <div className="lg:col-span-3">
                     <BezelCard padding="p-0">
-                        <div className="border-b border-[var(--bezel-ring)] px-6 py-4">
+                        <div className="flex items-center justify-between gap-3 border-b border-[var(--bezel-ring)] px-6 py-4">
                             <h2 className="font-bold">История выплат</h2>
+                            <Link
+                                href={route('accountant.payments.history')}
+                                className="inline-flex items-center gap-2 rounded-full bg-[var(--surface-muted)] px-3.5 py-2 text-xs font-semibold text-[var(--ink)] ring-1 ring-[var(--bezel-ring)] transition-fluid hover:ring-[var(--accent)]"
+                            >
+                                Все выплаты
+                                <ArrowRight size={14} weight="bold" />
+                            </Link>
                         </div>
                         <div className="table-scroll">
-                            <table className="w-full min-w-[480px] text-left text-sm">
+                            <table className="w-full min-w-[560px] text-left text-sm">
                                 <thead>
                                     <tr className="border-b border-[var(--bezel-ring)] bg-[var(--surface-muted)]">
                                         <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--muted)]">
@@ -137,6 +222,9 @@ export default function Payments({ employees = [], payments = [] }) {
                                         </th>
                                         <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--muted)]">
                                             Сотрудник
+                                        </th>
+                                        <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--muted)]">
+                                            Кто выплатил
                                         </th>
                                         <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--muted)]">
                                             Период
@@ -149,7 +237,7 @@ export default function Payments({ employees = [], payments = [] }) {
                                 <tbody>
                                     {payments.length === 0 ? (
                                         <tr>
-                                            <td colSpan={4} className="px-6 py-12 text-center text-[var(--muted)]">
+                                            <td colSpan={5} className="px-6 py-12 text-center text-[var(--muted)]">
                                                 История пуста
                                             </td>
                                         </tr>
@@ -162,9 +250,14 @@ export default function Payments({ employees = [], payments = [] }) {
                                                 transition={{ delay: i * 0.03, duration: 0.6, ease: [0.32, 0.72, 0, 1] }}
                                                 className="border-b border-[var(--bezel-ring)] last:border-0"
                                             >
-                                                <td className="px-6 py-4">{formatDate(payment.created_at)}</td>
+                                                <td className="px-6 py-4">
+                                                    {formatDate(payment.paid_on ?? payment.created_at)}
+                                                </td>
                                                 <td className="px-6 py-4 font-semibold">
                                                     {payment.user?.name ?? '—'}
+                                                </td>
+                                                <td className="px-6 py-4 text-[var(--muted)]">
+                                                    {payment.payer?.name ?? '—'}
                                                 </td>
                                                 <td className="px-6 py-4 text-[var(--muted)]">
                                                     {payment.period ?? '—'}

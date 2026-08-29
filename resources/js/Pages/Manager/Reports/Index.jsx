@@ -1,8 +1,12 @@
+import EmployeeReportList from '@/Components/Reports/EmployeeReportList';
+import ReportTable from '@/Components/Reports/ReportTable';
 import BezelCard from '@/Components/ui/BezelCard';
 import PageHeader from '@/Components/ui/PageHeader';
+import SoftDatePicker from '@/Components/ui/SoftDatePicker';
+import SoftSelect from '@/Components/ui/SoftSelect';
 import AppLayout from '@/Layouts/AppLayout';
 import { formatHours, formatMoney } from '@/lib/format';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
     ChartBar,
@@ -11,17 +15,55 @@ import {
     DownloadSimple,
     Trophy,
     Users,
+    WarningCircle,
+    Wallet,
     X,
 } from '@phosphor-icons/react';
 import { useEffect, useMemo, useState } from 'react';
 
-export default function Index({ reports = [], summary = {} }) {
+export default function Index({
+    reports = [],
+    summary = {},
+    filters = {},
+    objects = [],
+}) {
     const [chartOpen, setChartOpen] = useState(false);
+    const [from, setFrom] = useState(filters.from ?? '');
+    const [to, setTo] = useState(filters.to ?? '');
+    const [type, setType] = useState(filters.type ?? 'employees');
+    const [objectId, setObjectId] = useState(filters.object_id ? String(filters.object_id) : '');
+
+    const applyFilters = (event) => {
+        event.preventDefault();
+        router.get(
+            route('manager.reports.index'),
+            { from, to, type, object_id: type === 'object' ? objectId : undefined },
+            { preserveState: true, preserveScroll: true },
+        );
+    };
+
+    const queryString = () => {
+        const params = new URLSearchParams({
+            from: from || '',
+            to: to || '',
+            type,
+        });
+        if (type === 'object' && objectId) {
+            params.set('object_id', objectId);
+        }
+        return params.toString();
+    };
+
+    const exportUrl = () => `${route('manager.reports.export')}?${queryString()}`;
+    const pdfUrl = () => `${route('manager.reports.pdf')}?${queryString()}`;
 
     const cards = [
         {
-            label: 'Сотрудников',
-            value: summary.totalEmployees ?? 0,
+            label: type === 'brigades' ? 'Бригад' : 'Сотрудников',
+            value:
+                type === 'brigades'
+                    ? summary.totalBrigades ?? 0
+                    : summary.totalEmployees ?? 0,
             icon: Users,
         },
         {
@@ -30,14 +72,19 @@ export default function Index({ reports = [], summary = {} }) {
             icon: Clock,
         },
         {
-            label: 'Начислено',
+            label: 'Заработано',
             value: formatMoney(summary.totalAccrued ?? 0),
             icon: CurrencyCircleDollar,
         },
         {
-            label: 'Выплачено',
-            value: formatMoney(summary.totalPaid ?? 0),
-            icon: ChartBar,
+            label: 'Опоздания',
+            value: summary.totalLates ?? 0,
+            icon: WarningCircle,
+        },
+        {
+            label: 'Остаток',
+            value: formatMoney(summary.totalRemaining ?? 0),
+            icon: Wallet,
         },
     ];
 
@@ -48,6 +95,7 @@ export default function Index({ reports = [], summary = {} }) {
                 score: Number(row.accrued ?? 0),
                 minutes: Number(row.hours ?? 0),
                 days: Number(row.days ?? 0),
+                employee: row.employee ?? row.brigade ?? '—',
             }))
             .sort((a, b) => {
                 if (b.score !== a.score) {
@@ -89,17 +137,91 @@ export default function Index({ reports = [], summary = {} }) {
                     </button>
                 }
                 actions={
-                    <a
-                        href={route('manager.reports.export')}
-                        className="inline-flex items-center gap-2 rounded-full bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-[var(--bg)] shadow-soft transition-fluid hover:opacity-90"
-                    >
-                        <DownloadSimple size={18} weight="light" />
-                        Excel
-                    </a>
+                    <div className="flex flex-wrap gap-2">
+                        <a
+                            href={pdfUrl()}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-2 rounded-full bg-[var(--surface)] px-5 py-2.5 text-sm font-semibold text-[var(--ink)] ring-1 ring-[var(--bezel-ring)] transition-fluid hover:bg-[var(--surface-muted)]"
+                        >
+                            PDF
+                        </a>
+                        <a
+                            href={exportUrl()}
+                            className="inline-flex items-center gap-2 rounded-full bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-[var(--bg)] shadow-soft transition-fluid hover:opacity-90"
+                        >
+                            <DownloadSimple size={18} weight="light" />
+                            Excel
+                        </a>
+                    </div>
                 }
             />
 
-            <div className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-4">
+            <BezelCard className="mb-6" padding="p-4 sm:p-5">
+                <form
+                    onSubmit={applyFilters}
+                    className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5"
+                >
+                    <div>
+                        <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">
+                            С
+                        </label>
+                        <SoftDatePicker value={from} onChange={setFrom} />
+                    </div>
+                    <div>
+                        <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">
+                            По
+                        </label>
+                        <SoftDatePicker value={to} onChange={setTo} />
+                    </div>
+                    <div>
+                        <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">
+                            Тип
+                        </label>
+                        <SoftSelect
+                            value={type}
+                            onChange={setType}
+                            options={[
+                                { value: 'employees', label: 'Сотрудники' },
+                                { value: 'brigades', label: 'Бригады' },
+                                { value: 'object', label: 'Объект' },
+                                { value: 'owed', label: 'Кому должны' },
+                            ]}
+                        />
+                    </div>
+                    {type === 'object' ? (
+                        <div>
+                            <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">
+                                Объект
+                            </label>
+                            <SoftSelect
+                                value={objectId}
+                                onChange={setObjectId}
+                                placeholder="Выберите"
+                                options={[
+                                    { value: '', label: 'Выберите' },
+                                    ...objects.map((object) => ({
+                                        value: object.id,
+                                        label: object.name,
+                                    })),
+                                ]}
+                            />
+                        </div>
+                    ) : (
+                        <div className="hidden lg:block" />
+                    )}
+                    <div className="flex items-end">
+                        <button
+                            type="submit"
+                            className="w-full rounded-full bg-[var(--surface)] px-4 py-3 text-sm font-semibold ring-1 ring-[var(--bezel-ring)]"
+                        >
+                            Применить
+                        </button>
+                    </div>
+                </form>
+            </BezelCard>
+
+            <div className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-5">
                 {cards.map((card, i) => (
                     <motion.div
                         key={card.label}
@@ -112,12 +234,12 @@ export default function Index({ reports = [], summary = {} }) {
                         }}
                     >
                         <BezelCard padding="p-5">
-                            <div className="flex items-start justify-between">
-                                <div>
+                            <div className="flex items-start justify-between gap-2">
+                                <div className="min-w-0">
                                     <p className="text-[10px] uppercase tracking-[0.15em] text-[var(--muted)]">
                                         {card.label}
                                     </p>
-                                    <p className="mt-1 text-xl font-bold text-[var(--ink)]">
+                                    <p className="mt-1 break-words text-base font-bold leading-tight text-[var(--ink)] sm:text-xl">
                                         {card.value}
                                     </p>
                                 </div>
@@ -133,82 +255,47 @@ export default function Index({ reports = [], summary = {} }) {
             </div>
 
             <BezelCard padding="p-0">
-                <div className="border-b border-[var(--bezel-ring)] px-6 py-4">
+                <div className="border-b border-[var(--bezel-ring)] px-4 py-4 sm:px-6">
                     <h2 className="font-bold text-[var(--ink)]">
-                        Детализация по сотрудникам
+                        {type === 'brigades'
+                            ? 'Детализация по бригадам'
+                            : type === 'object'
+                              ? 'Детализация по объекту'
+                              : type === 'owed'
+                                ? 'Кому должны зарплату'
+                                : 'Детализация по сотрудникам'}
                     </h2>
+                    <p className="mt-1 text-sm text-[var(--muted)]">
+                        {type === 'brigades'
+                            ? 'Сводка начислений и выплат по бригадам'
+                            : type === 'object'
+                              ? 'Сотрудники с временем на выбранном объекте'
+                              : 'Нажмите на сотрудника для подробного отчёта'}
+                    </p>
                 </div>
-                <div className="table-scroll">
-                    <table className="w-full min-w-[560px] text-left text-sm">
-                        <thead>
-                            <tr className="border-b border-[var(--bezel-ring)] bg-[var(--surface-muted)]">
-                                <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--muted)]">
-                                    Сотрудник
-                                </th>
-                                <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--muted)]">
-                                    Часы
-                                </th>
-                                <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--muted)]">
-                                    Начислено
-                                </th>
-                                <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--muted)]">
-                                    Авансы
-                                </th>
-                                <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--muted)]">
-                                    Выплачено
-                                </th>
-                                <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--muted)]">
-                                    Остаток
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {reports.length === 0 ? (
-                                <tr>
-                                    <td
-                                        colSpan={6}
-                                        className="px-6 py-12 text-center text-[var(--muted)]"
-                                    >
-                                        Нет данных за выбранный период
-                                    </td>
-                                </tr>
-                            ) : (
-                                reports.map((row, i) => (
-                                    <motion.tr
-                                        key={row.id ?? i}
-                                        initial={{ opacity: 0, y: 12 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{
-                                            delay: i * 0.03,
-                                            duration: 0.6,
-                                            ease: [0.32, 0.72, 0, 1],
-                                        }}
-                                        className="border-b border-[var(--bezel-ring)] last:border-0"
-                                    >
-                                        <td className="px-6 py-4 font-medium text-[var(--ink)]">
-                                            {row.employee ?? row.period}
-                                        </td>
-                                        <td className="px-6 py-4 text-[var(--ink)]">
-                                            {formatHours(row.hours ?? 0)}
-                                        </td>
-                                        <td className="px-6 py-4 text-[var(--ink)]">
-                                            {formatMoney(row.accrued ?? 0)}
-                                        </td>
-                                        <td className="px-6 py-4 text-[var(--ink)]">
-                                            {formatMoney(row.advances ?? 0)}
-                                        </td>
-                                        <td className="px-6 py-4 text-[var(--ink)]">
-                                            {formatMoney(row.paid ?? 0)}
-                                        </td>
-                                        <td className="px-6 py-4 font-semibold text-[var(--accent)]">
-                                            {formatMoney(row.remaining ?? 0)}
-                                        </td>
-                                    </motion.tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                {type === 'object' ? (
+                    <ReportTable
+                        rows={reports}
+                        nameKey="employee"
+                        nameLabel="Сотрудник"
+                        secondaryKey="object"
+                        secondaryLabel="Объект"
+                        empty="Выберите объект и нажмите «Применить»"
+                    />
+                ) : type === 'brigades' ? (
+                    <ReportTable
+                        rows={reports}
+                        nameKey="brigade"
+                        nameLabel="Бригада"
+                        secondaryKey="members"
+                        secondaryLabel="Сотрудников"
+                    />
+                ) : (
+                    <EmployeeReportList
+                        reports={reports}
+                        showRouteName="manager.reports.show"
+                    />
+                )}
             </BezelCard>
 
             <AnimatePresence>

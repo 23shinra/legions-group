@@ -1,4 +1,5 @@
-import { router, usePage } from '@inertiajs/react';
+import useRealtimeNotifications from '@/hooks/useRealtimeNotifications';
+import { router } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Bell, Checks } from '@phosphor-icons/react';
 import { useEffect, useRef, useState } from 'react';
@@ -27,7 +28,8 @@ function timeAgo(iso) {
 }
 
 export default function NotificationBell() {
-    const { notifications = [] } = usePage().props;
+    const { notifications, removeNotification, clearNotifications } =
+        useRealtimeNotifications();
     const [open, setOpen] = useState(false);
     const rootRef = useRef(null);
     const count = notifications.length;
@@ -37,25 +39,30 @@ export default function NotificationBell() {
             return undefined;
         }
 
-        const onPointer = (e) => {
-            if (rootRef.current && !rootRef.current.contains(e.target)) {
+        const onPointer = (event) => {
+            if (rootRef.current && !rootRef.current.contains(event.target)) {
                 setOpen(false);
             }
         };
 
         document.addEventListener('pointerdown', onPointer);
+
         return () => document.removeEventListener('pointerdown', onPointer);
     }, [open]);
 
     const openItem = (item) => {
         setOpen(false);
+        removeNotification(item.id);
         router.post(route('notifications.read', item.id));
     };
 
     const markAll = () => {
         router.post(route('notifications.read-all'), {}, {
             preserveScroll: true,
-            onSuccess: () => setOpen(false),
+            onSuccess: () => {
+                clearNotifications();
+                setOpen(false);
+            },
         });
     };
 
@@ -63,7 +70,7 @@ export default function NotificationBell() {
         <div ref={rootRef} className="relative">
             <button
                 type="button"
-                onClick={() => setOpen((v) => !v)}
+                onClick={() => setOpen((value) => !value)}
                 aria-label="Уведомления"
                 className={`relative flex h-10 w-10 items-center justify-center rounded-full shadow-soft backdrop-blur-xl transition-fluid ${
                     open

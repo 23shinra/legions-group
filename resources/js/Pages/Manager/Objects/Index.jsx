@@ -1,15 +1,40 @@
 import BezelCard from '@/Components/ui/BezelCard';
+import IslandButton from '@/Components/ui/IslandButton';
 import PageHeader from '@/Components/ui/PageHeader';
+import SoftDatePicker from '@/Components/ui/SoftDatePicker';
+import SoftSelect from '@/Components/ui/SoftSelect';
 import StatusBadge from '@/Components/ui/StatusBadge';
 import AppLayout from '@/Layouts/AppLayout';
 import { formatDate } from '@/lib/format';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, useForm } from '@inertiajs/react';
 import { motion } from 'framer-motion';
-import { Buildings } from '@phosphor-icons/react';
+import { Buildings, Plus } from '@phosphor-icons/react';
+import { useState } from 'react';
 
-export default function Index({ objects = [] }) {
+export default function Index({ objects = [], brigades = [] }) {
+    const [createOpen, setCreateOpen] = useState(false);
+    const { data, setData, post, processing, errors, reset } = useForm({
+        name: '',
+        address: '',
+        brigade_id: brigades[0]?.id ?? '',
+        start_date: new Date().toISOString().slice(0, 10),
+        work_days: 30,
+        status: 'active',
+    });
+
     const openObject = (id) => {
         router.visit(route('manager.objects.show', id));
+    };
+
+    const submitCreate = (e) => {
+        e.preventDefault();
+        post(route('manager.objects.store'), {
+            preserveScroll: true,
+            onSuccess: () => {
+                reset();
+                setCreateOpen(false);
+            },
+        });
     };
 
     return (
@@ -20,7 +45,112 @@ export default function Index({ objects = [] }) {
                 eyebrow="Стройка"
                 title="Объекты"
                 subtitle={`${objects.length} объектов`}
+                actions={
+                    <IslandButton
+                        icon={Plus}
+                        onClick={() => setCreateOpen((v) => !v)}
+                    >
+                        {createOpen ? 'Скрыть' : 'Новый объект'}
+                    </IslandButton>
+                }
             />
+
+            {createOpen && (
+                <BezelCard className="mb-6" padding="p-5 sm:p-6">
+                    <h2 className="mb-4 text-lg font-bold">Создать объект</h2>
+                    <form onSubmit={submitCreate} className="grid gap-4 sm:grid-cols-2">
+                        <div>
+                            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.15em] text-[var(--muted)]">
+                                Название
+                            </label>
+                            <input
+                                value={data.name}
+                                onChange={(e) => setData('name', e.target.value)}
+                                className="input-soft"
+                                placeholder="Объект №5"
+                            />
+                            {errors.name && (
+                                <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                            )}
+                        </div>
+                        <div>
+                            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.15em] text-[var(--muted)]">
+                                Адрес
+                            </label>
+                            <input
+                                value={data.address}
+                                onChange={(e) => setData('address', e.target.value)}
+                                className="input-soft"
+                                placeholder="г. Алматы, ул. ..."
+                            />
+                        </div>
+                        <div>
+                            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.15em] text-[var(--muted)]">
+                                Бригада
+                            </label>
+                            <SoftSelect
+                                value={data.brigade_id}
+                                onChange={(next) => setData('brigade_id', next)}
+                                options={[
+                                    { value: '', label: 'Без бригады' },
+                                    ...brigades.map((brigade) => ({
+                                        value: brigade.id,
+                                        label: brigade.name,
+                                    })),
+                                ]}
+                            />
+                        </div>
+                        <div>
+                            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.15em] text-[var(--muted)]">
+                                Смен на объекте
+                            </label>
+                            <input
+                                type="number"
+                                min="1"
+                                max="365"
+                                value={data.work_days}
+                                onChange={(e) => setData('work_days', e.target.value)}
+                                className="input-soft"
+                            />
+                            {errors.work_days && (
+                                <p className="mt-1 text-sm text-red-600">{errors.work_days}</p>
+                            )}
+                        </div>
+                        <div>
+                            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.15em] text-[var(--muted)]">
+                                Дата начала
+                            </label>
+                            <SoftDatePicker
+                                value={data.start_date}
+                                onChange={(next) => setData('start_date', next)}
+                            />
+                        </div>
+                        <div>
+                            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.15em] text-[var(--muted)]">
+                                Статус
+                            </label>
+                            <SoftSelect
+                                value={data.status}
+                                onChange={(next) => setData('status', next)}
+                                options={[
+                                    { value: 'planned', label: 'Планируется' },
+                                    { value: 'active', label: 'В работе' },
+                                    { value: 'completed', label: 'Завершён' },
+                                ]}
+                            />
+                        </div>
+                        <div className="flex items-end sm:col-span-2">
+                            <button
+                                type="submit"
+                                disabled={processing}
+                                className="rounded-full bg-[var(--accent)] px-6 py-3 text-sm font-semibold text-[var(--bg)] disabled:opacity-50"
+                            >
+                                Создать
+                            </button>
+                        </div>
+                    </form>
+                </BezelCard>
+            )}
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {objects.length === 0 ? (
@@ -64,7 +194,11 @@ export default function Index({ objects = [] }) {
                                     <StatusBadge status={object.status ?? (object.closed_at ? 'closed' : 'open')} />
                                 </div>
 
-                                <div className="mt-4 flex items-center gap-6 text-sm">
+                                <div className="mt-4 flex flex-wrap items-center gap-4 text-sm">
+                                    <div>
+                                        <span className="text-[var(--muted)]">Смен: </span>
+                                        <span className="font-semibold">{object.work_days ?? '—'}</span>
+                                    </div>
                                     <div>
                                         <span className="text-[var(--muted)]">Бригад: </span>
                                         <span className="font-semibold">{object.brigades_count ?? (object.brigade ? 1 : 0)}</span>

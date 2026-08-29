@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\AdvancePaymentMethod;
 use App\Enums\AdvanceStatus;
 use App\Enums\UserRole;
 use App\Models\ActivityLog;
@@ -21,25 +22,59 @@ final readonly class AdvanceService
 
     public function __construct(
         private PayrollService $payroll,
+        private WorkerContextService $workerContext,
+        private RealtimeNotifier $realtime,
     ) {}
 
     /**
-     * @return array{can_request: bool, worked_days: int, required_days: int, message: string|null, remaining: float}
+     * @return array{
+     *     can_request: bool,
+     *     worked_days: int,
+     *     worked_minutes: int,
+     *     required_days: int,
+     *     work_days: int|null,
+     *     days_left: int|null,
+     *     message: string|null,
+     *     accrued: float,
+     *     remaining: float,
+     *     projected_remaining: float,
+     *     available_for_advance: float,
+     *     paid_advances: float,
+     *     paid_salary: float,
+     *     reserved_advances: float
+     * }
      */
     public function eligibility(User $worker): array
     {
-        $balance = $this->payroll->balanceFor($worker);
-        $workedDays = (int) $balance['days'];
+        $object = $this->workerContext->activeObject($worker);
+        $summary = $this->payroll->objectSummary($worker, $object);
+        $breakdown = $this->payroll->advanceBreakdown($worker, $object);
+        $workedDays = (int) $summary['days'];
         $canRequest = $workedDays >= self::MIN_SHIFTS;
+        $accrued = max(0.0, (float) $breakdown['accrued']);
+        $available = min($accrued, (float) $breakdown['available_for_advance']);
+
+        if ($worker->max_advance !== null) {
+            $available = min($available, (float) $worker->max_advance);
+        }
 
         return [
             'can_request' => $canRequest,
             'worked_days' => $workedDays,
+            'worked_minutes' => (int) $summary['minutes'],
             'required_days' => self::MIN_SHIFTS,
+            'work_days' => $summary['work_days'],
+            'days_left' => $summary['days_left'],
             'message' => $canRequest
                 ? null
                 : 'У вас недостаточно отработанных смен на аванс',
-            'remaining' => (float) $balance['remaining'],
+            'accrued' => $accrued,
+            'remaining' => (float) $breakdown['remaining'],
+            'projected_remaining' => (float) $summary['projected_remaining'],
+            'available_for_advance' => round($available, 2),
+            'paid_advances' => (float) $breakdown['paid_advances'],
+            'paid_salary' => (float) $breakdown['paid_salary'],
+            'reserved_advances' => (float) $breakdown['reserved_advances'],
         ];
     }
 
@@ -53,15 +88,26 @@ final readonly class AdvanceService
             ]);
         }
 
-        $balance = $this->payroll->balanceFor($worker);
-        $warnings = [];
+        $accrued = (float) $eligibility['accrued'];
+        $available = (float) $eligibility['available_for_advance'];
 
-        if ($amount > $balance['remaining'] && $balance['remaining'] >= 0) {
-            $warnings[] = 'Недостаточно начисленной суммы для выдачи аванса.';
+        if ($amount > $accrued) {
+            throw ValidationException::withMessages([
+                'amount' => sprintf(
+                    'Вы не можете запросить больше, чем заработали по факту (%s ₸).',
+                    number_format($accrued, 0, '.', ' '),
+                ),
+            ]);
         }
 
-        if ($worker->max_advance !== null && $amount > (float) $worker->max_advance) {
-            $warnings[] = 'Сумма превышает максимальный доступный аванс.';
+        if ($amount > $available) {
+            throw ValidationException::withMessages([
+                'amount' => sprintf(
+                    'Доступно к авансу не более %s ₸ (из заработанных %s ₸).',
+                    number_format($available, 0, '.', ' '),
+                    number_format($accrued, 0, '.', ' '),
+                ),
+            ]);
         }
 
         $advance = AdvanceRequest::query()->create([
@@ -73,17 +119,22 @@ final readonly class AdvanceService
 
         ActivityLog::record($worker, 'advance.requested', $advance, [
             'amount' => $amount,
-            'warnings' => $warnings,
+            'member' => $worker->name,
         ]);
 
-        $managers = User::query()
+        $advance->load('user.brigade.brigadier');
+
+        $recipients = User::query()
             ->whereIn('role', [UserRole::Manager, UserRole::Accountant])
             ->get();
-        Notification::send($managers, new NewAdvanceRequest($advance));
 
-        if ($worker->brigade?->brigadier) {
-            $worker->brigade->brigadier->notify(new NewAdvanceRequest($advance));
+        $brigadier = $advance->user?->brigade?->brigadier;
+
+        if ($brigadier !== null) {
+            $recipients = $recipients->push($brigadier)->unique('id');
         }
+
+        Notification::send($recipients, new NewAdvanceRequest($advance));
 
         return $advance;
     }
@@ -103,7 +154,10 @@ final readonly class AdvanceService
 
         $advance = $advance->fresh(['user']);
 
-        ActivityLog::record($actor, 'advance.approved', $advance);
+        ActivityLog::record($actor, 'advance.approved', $advance, [
+            'member' => $advance->user?->name,
+            'amount' => (float) $advance->amount,
+        ]);
 
         if ($advance->user) {
             $advance->user->notify(new AdvanceStatusChanged($advance));
@@ -114,6 +168,8 @@ final readonly class AdvanceService
             ->get();
 
         Notification::send($accountants, new AdvanceApprovedForPayment($advance));
+
+        $this->pingAdvanceWatchers($advance, $actor, 'advance.status');
 
         return $advance;
     }
@@ -131,27 +187,63 @@ final readonly class AdvanceService
             'review_comment' => $comment,
         ]);
 
-        ActivityLog::record($actor, 'advance.rejected', $advance);
+        ActivityLog::record($actor, 'advance.rejected', $advance, [
+            'member' => $advance->user?->name,
+            'amount' => (float) $advance->amount,
+        ]);
         $advance->user->notify(new AdvanceStatusChanged($advance));
+        $this->pingAdvanceWatchers($advance, $actor, 'advance.status');
 
         return $advance->fresh(['user']);
     }
 
-    public function markPaid(AdvanceRequest $advance, User $actor): AdvanceRequest
-    {
+    public function markPaid(
+        AdvanceRequest $advance,
+        User $actor,
+        AdvancePaymentMethod $method,
+        ?string $receiptPath = null,
+        ?string $note = null,
+    ): AdvanceRequest {
         if ($advance->status !== AdvanceStatus::Approved) {
-            throw ValidationException::withMessages(['status' => 'Выплатить можно только одобренный аванс.']);
+            throw ValidationException::withMessages(['status' => 'Выплатить можно только одобренный руководителем аванс.']);
         }
+
+        if ($method === AdvancePaymentMethod::Transfer && ($receiptPath === null || $receiptPath === '')) {
+            throw ValidationException::withMessages(['receipt' => 'Прикрепите чек перевода.']);
+        }
+
+        $paymentNote = $method === AdvancePaymentMethod::Cash
+            ? ($note !== null && trim($note) !== '' ? trim($note) : 'Выдан нал')
+            : $note;
 
         $advance->update([
             'status' => AdvanceStatus::Paid,
             'paid_by' => $actor->id,
             'paid_at' => now(),
+            'payment_method' => $method,
+            'payment_receipt_path' => $receiptPath,
+            'payment_note' => $paymentNote,
         ]);
 
-        ActivityLog::record($actor, 'advance.paid', $advance);
+        ActivityLog::record($actor, 'advance.paid', $advance, [
+            'payment_method' => $method->value,
+            'member' => $advance->user?->name,
+            'amount' => (float) $advance->amount,
+        ]);
         $advance->user->notify(new AdvanceStatusChanged($advance));
+        $this->pingAdvanceWatchers($advance, $actor, 'advance.status');
 
         return $advance->fresh(['user']);
+    }
+
+    private function pingAdvanceWatchers(AdvanceRequest $advance, User $actor, string $event): void
+    {
+        $advance->loadMissing('user.brigade.brigadier');
+
+        $this->realtime->ping([
+            $advance->user?->brigade?->brigadier,
+        ], $event, $actor->id);
+
+        $this->realtime->pingRoles([UserRole::Manager, UserRole::Accountant], $event, $actor->id);
     }
 }

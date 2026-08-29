@@ -1,4 +1,5 @@
-/* Legions Group PWA service worker */
+/* Legionis Group PWA service worker v3 */
+const SW_VERSION = 'legionis-v3';
 self.addEventListener('install', (event) => {
     self.skipWaiting();
 });
@@ -33,7 +34,7 @@ self.addEventListener('notificationclick', (event) => {
 
 self.addEventListener('push', (event) => {
     let payload = {
-        title: 'Legions Group',
+        title: 'Legionis Group',
         body: 'Новое уведомление',
         url: '/',
     };
@@ -54,8 +55,8 @@ self.addEventListener('push', (event) => {
     event.waitUntil(
         self.registration.showNotification(payload.title, {
             body: payload.body,
-            icon: '/icon-192.png',
-            badge: '/favicon-32.png',
+            icon: '/icon-192.png?v=3',
+            badge: '/favicon-32.png?v=3',
             data: { url: payload.url || '/' },
         }),
     );
@@ -66,10 +67,10 @@ self.addEventListener('message', (event) => {
 
     if (data.type === 'SHOW_NOTIFICATION') {
         event.waitUntil(
-            self.registration.showNotification(data.title || 'Legions Group', {
+            self.registration.showNotification(data.title || 'Legionis Group', {
                 body: data.body || '',
-                icon: '/icon-192.png',
-                badge: '/favicon-32.png',
+                icon: '/icon-192.png?v=3',
+                badge: '/favicon-32.png?v=3',
                 data: { url: data.url || '/' },
             }),
         );

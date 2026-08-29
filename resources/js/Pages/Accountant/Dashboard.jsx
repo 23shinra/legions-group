@@ -1,4 +1,5 @@
 import BezelCard from '@/Components/ui/BezelCard';
+import IslandButton from '@/Components/ui/IslandButton';
 import PageHeader from '@/Components/ui/PageHeader';
 import StatPill from '@/Components/ui/StatPill';
 import AppLayout from '@/Layouts/AppLayout';
@@ -34,24 +35,28 @@ export default function Dashboard({
                     icon={Wallet}
                     accent
                     delay={0}
+                    href={route('accountant.payments.index')}
                 />
                 <StatPill
                     label="Ожидают выплаты"
                     value={stats.pendingAdvancesCount ?? 0}
                     icon={CurrencyCircleDollar}
                     delay={0.05}
+                    href={route('accountant.advances.index')}
                 />
                 <StatPill
                     label="Сумма авансов"
                     value={formatMoney(stats.pendingAdvancesSum ?? 0)}
                     icon={CurrencyCircleDollar}
                     delay={0.1}
+                    href={route('accountant.advances.index')}
                 />
                 <StatPill
                     label="Выплачено (мес.)"
                     value={formatMoney(stats.paidThisMonth ?? 0)}
                     icon={Clock}
                     delay={0.15}
+                    href={route('accountant.payments.index')}
                 />
             </div>
 
@@ -132,21 +137,18 @@ export default function Dashboard({
             </div>
 
             <div className="mt-8 flex flex-wrap gap-3">
-                <Link
-                    href={route('accountant.advances.index')}
-                    className="rounded-full bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition-fluid hover:bg-[var(--accent-light)]"
-                >
+                <IslandButton href={route('accountant.advances.index')}>
                     Выплатить авансы
-                </Link>
+                </IslandButton>
                 <Link
                     href={route('accountant.payments.index')}
-                    className="rounded-full bg-[var(--surface)] px-5 py-2.5 text-sm font-semibold shadow-soft ring-1 ring-[var(--bezel-ring)] transition-fluid hover:shadow-lift"
+                    className="rounded-full bg-[var(--surface)] px-5 py-2.5 text-sm font-semibold text-[var(--ink)] shadow-soft ring-1 ring-[var(--bezel-ring)] transition-fluid hover:shadow-lift"
                 >
                     Выплата зарплаты
                 </Link>
                 <Link
                     href={route('accountant.reports.index')}
-                    className="rounded-full bg-[var(--surface)] px-5 py-2.5 text-sm font-semibold shadow-soft ring-1 ring-[var(--bezel-ring)] transition-fluid hover:shadow-lift"
+                    className="rounded-full bg-[var(--surface)] px-5 py-2.5 text-sm font-semibold text-[var(--ink)] shadow-soft ring-1 ring-[var(--bezel-ring)] transition-fluid hover:shadow-lift"
                 >
                     Отчёты
                 </Link>

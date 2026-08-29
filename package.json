@@ -26,6 +26,9 @@
     },
     "dependencies": {
         "@phosphor-icons/react": "^2.1.10",
-        "framer-motion": "^13.1.1"
+        "@rolldown/binding-linux-x64-gnu": "^1.2.6",
+        "framer-motion": "^13.1.1",
+        "laravel-echo": "^2.4.0",
+        "pusher-js": "^8.6.0"
     }
 }

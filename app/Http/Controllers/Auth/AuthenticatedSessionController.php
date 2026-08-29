@@ -20,7 +20,7 @@ class AuthenticatedSessionController extends Controller
                 ['login' => 'manager', 'label' => 'Руководитель', 'role' => 'manager'],
                 ['login' => 'accountant', 'label' => 'Бухгалтер', 'role' => 'accountant'],
                 ['login' => 'brigadier1', 'label' => 'Бригадир', 'role' => 'brigadier'],
-                ['login' => 'worker1', 'label' => 'Рабочий', 'role' => 'worker'],
+                ['login' => 'worker1', 'label' => 'Строитель', 'role' => 'worker'],
             ],
         ]);
     }

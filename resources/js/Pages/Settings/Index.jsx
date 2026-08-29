@@ -1,5 +1,6 @@
 import BezelCard from '@/Components/ui/BezelCard';
 import IslandButton from '@/Components/ui/IslandButton';
+import ManagerEmployeesSettings from '@/Components/ManagerEmployeesSettings';
 import PageHeader from '@/Components/ui/PageHeader';
 import useNotificationPermission from '@/hooks/useNotificationPermission';
 import useTheme from '@/hooks/useTheme';
@@ -33,7 +34,7 @@ const fadeUp = {
     transition: { duration: 0.7, ease: [0.32, 0.72, 0, 1] },
 };
 
-export default function Index({ status }) {
+export default function Index({ status, brigades = [], payTypes = [] }) {
     const { auth } = usePage().props;
     const user = auth?.user;
     const { theme, setTheme } = useTheme();
@@ -89,8 +90,20 @@ export default function Index({ status }) {
             <PageHeader
                 eyebrow="Аккаунт"
                 title="Настройки"
-                subtitle="Тема, уведомления, пароль и выход"
+                subtitle={
+                    user?.role === 'manager'
+                        ? 'Сотрудники, тема, уведомления, пароль и выход'
+                        : 'Тема, уведомления, пароль и выход'
+                }
             />
+
+            {user?.role === 'manager' && (
+                <ManagerEmployeesSettings
+                    brigades={brigades}
+                    payTypes={payTypes}
+                    status={status}
+                />
+            )}
 
             <div className="grid gap-5 sm:gap-6 lg:grid-cols-12 lg:gap-8">
                 <motion.div
@@ -162,7 +175,7 @@ export default function Index({ status }) {
                                         <span
                                             className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
                                                 active
-                                                    ? 'bg-white/15'
+                                                    ? 'bg-[var(--bg)]/15'
                                                     : 'bg-[var(--bezel)]'
                                             }`}
                                         >
@@ -212,7 +225,7 @@ export default function Index({ status }) {
                                               ? 'Разрешены — вы будете получать оповещения'
                                               : isDenied
                                                 ? 'Заблокированы в браузере. Разрешите вручную в настройках сайта'
-                                                : 'Разрешите уведомления для приложения Legions Group'}
+                                                : 'Разрешите уведомления для приложения Legionis Group'}
                                     </p>
                                     {notifError && (
                                         <p className="mt-2 flex items-center gap-1.5 text-sm text-[var(--muted)]">

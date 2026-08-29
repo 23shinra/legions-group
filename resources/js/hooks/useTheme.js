@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-const STORAGE_KEY = 'lg-theme';
+const STORAGE_KEY = 'lg-theme-v2';
 
 function readTheme() {
     if (typeof document === 'undefined') {
@@ -21,9 +21,7 @@ function readTheme() {
         // ignore
     }
 
-    return window.matchMedia('(prefers-color-scheme: dark)').matches
-        ? 'dark'
-        : 'light';
+    return 'light';
 }
 
 function applyTheme(theme) {

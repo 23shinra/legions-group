@@ -30,6 +30,15 @@ final class Brigade extends Model
         return $this->hasMany(WorkObject::class);
     }
 
+    public function activeObjects(): \Illuminate\Database\Eloquent\Collection
+    {
+        return $this->workObjects()
+            ->whereIn('status', ['active', 'planned'])
+            ->whereNull('closed_at')
+            ->orderBy('start_date')
+            ->get();
+    }
+
     public function activeObject(): ?WorkObject
     {
         return $this->workObjects()

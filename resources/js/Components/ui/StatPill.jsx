@@ -39,6 +39,9 @@ export default function StatPill({
         </div>
     );
 
+    const shellClass =
+        'rounded-[1.25rem] bg-[var(--surface-muted)] px-3.5 py-3.5 shadow-soft transition-fluid sm:px-5 sm:py-4 md:hover:bg-[var(--bezel)] md:hover:shadow-lift md:hover:ring-1 md:hover:ring-[var(--bezel-ring)]';
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -49,12 +52,12 @@ export default function StatPill({
             {href ? (
                 <Link
                     href={href}
-                    className="block rounded-[1.25rem] bg-[var(--surface-muted)] px-3.5 py-3.5 shadow-soft transition-fluid hover:shadow-lift active:scale-[0.99] sm:px-5 sm:py-4"
+                    className={`block md:cursor-pointer md:active:scale-[0.99] ${shellClass}`}
                 >
                     {content}
                 </Link>
             ) : (
-                <div className="rounded-[1.25rem] bg-[var(--surface-muted)] px-3.5 py-3.5 shadow-soft sm:px-5 sm:py-4">
+                <div className={`md:cursor-default ${shellClass}`}>
                     {content}
                 </div>
             )}

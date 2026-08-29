@@ -71,7 +71,7 @@ export default function Hours({ entries = [], totalMinutes = 0 }) {
                                             {formatDate(entry.started_at)}
                                         </td>
                                         <td className="px-6 py-4 text-[var(--muted)]">
-                                            {entry.object?.name ?? '—'}
+                                            {entry.work_object?.name ?? '—'}
                                         </td>
                                         <td className="px-6 py-4">
                                             {formatTime(entry.started_at)}
@@ -82,7 +82,7 @@ export default function Hours({ entries = [], totalMinutes = 0 }) {
                                                 : '—'}
                                         </td>
                                         <td className="px-6 py-4 font-semibold text-[var(--accent)]">
-                                            {formatHours(entry.duration_minutes)}
+                                            {formatHours(entry.worked_minutes)}
                                         </td>
                                     </motion.tr>
                                 ))

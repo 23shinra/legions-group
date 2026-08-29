@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\AdvancePaymentMethod;
 use App\Enums\AdvanceStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,6 +21,9 @@ final class AdvanceRequest extends Model
         'review_comment',
         'paid_by',
         'paid_at',
+        'payment_method',
+        'payment_receipt_path',
+        'payment_note',
     ];
 
     protected function casts(): array
@@ -29,7 +33,17 @@ final class AdvanceRequest extends Model
             'status' => AdvanceStatus::class,
             'reviewed_at' => 'datetime',
             'paid_at' => 'datetime',
+            'payment_method' => AdvancePaymentMethod::class,
         ];
+    }
+
+    public function receiptUrl(): ?string
+    {
+        if ($this->payment_receipt_path === null) {
+            return null;
+        }
+
+        return '/storage/'.$this->payment_receipt_path;
     }
 
     public function user(): BelongsTo

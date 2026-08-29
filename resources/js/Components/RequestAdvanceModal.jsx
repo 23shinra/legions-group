@@ -1,8 +1,9 @@
 import IslandButton from '@/Components/ui/IslandButton';
+import { formatHours, formatMoney } from '@/lib/format';
 import { useForm } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowRight, Clock, WarningCircle, X } from '@phosphor-icons/react';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 export default function RequestAdvanceModal({
     open,
@@ -13,12 +14,31 @@ export default function RequestAdvanceModal({
     const message =
         eligibility.message ||
         'У вас недостаточно отработанных смен на аванс';
+    const maxAmount = Number(eligibility.available_for_advance ?? 0);
+    const earned = Number(eligibility.accrued ?? 0);
 
     const { data, setData, post, processing, errors, reset, clearErrors } =
         useForm({
             amount: '',
             comment: '',
         });
+
+    const amountValue = Number(data.amount || 0);
+    const clientError = useMemo(() => {
+        if (!canRequest || !data.amount) {
+            return null;
+        }
+
+        if (amountValue > earned) {
+            return `Вы не можете запросить больше, чем заработали по факту (${formatMoney(earned)}).`;
+        }
+
+        if (maxAmount > 0 && amountValue > maxAmount) {
+            return `Доступно к авансу не более ${formatMoney(maxAmount)}.`;
+        }
+
+        return null;
+    }, [amountValue, canRequest, data.amount, earned, maxAmount]);
 
     useEffect(() => {
         if (!open) {
@@ -38,7 +58,7 @@ export default function RequestAdvanceModal({
 
     const submit = (e) => {
         e.preventDefault();
-        if (!canRequest) {
+        if (!canRequest || clientError) {
             return;
         }
 
@@ -131,6 +151,81 @@ export default function RequestAdvanceModal({
                                 </div>
                             ) : (
                                 <form onSubmit={submit} className="space-y-5">
+                                    <div className="rounded-2xl bg-[var(--surface-muted)] p-4 ring-1 ring-[var(--bezel-ring)]">
+                                        <div className="grid grid-cols-2 gap-3 text-sm">
+                                            <div>
+                                                <p className="text-[10px] uppercase tracking-[0.14em] text-[var(--muted)]">
+                                                    Смен
+                                                </p>
+                                                <p className="mt-1 font-semibold text-[var(--ink)]">
+                                                    {eligibility.worked_days ?? 0}
+                                                    {eligibility.work_days
+                                                        ? ` / ${eligibility.work_days}`
+                                                        : ''}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] uppercase tracking-[0.14em] text-[var(--muted)]">
+                                                    Часов
+                                                </p>
+                                                <p className="mt-1 font-semibold text-[var(--ink)]">
+                                                    {formatHours(
+                                                        eligibility.worked_minutes ?? 0,
+                                                    )}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] uppercase tracking-[0.14em] text-[var(--muted)]">
+                                                    Заработано
+                                                </p>
+                                                <p className="mt-1 font-semibold text-[var(--ink)]">
+                                                    {formatMoney(
+                                                        eligibility.accrued ?? 0,
+                                                    )}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] uppercase tracking-[0.14em] text-[var(--muted)]">
+                                                    Осталось смен
+                                                </p>
+                                                <p className="mt-1 font-semibold text-[var(--ink)]">
+                                                    {eligibility.days_left ?? '—'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <p className="mt-3 text-sm text-[var(--muted)]">
+                                            Доступно к авансу:{' '}
+                                            <span className="font-semibold text-[var(--ink)]">
+                                                {formatMoney(maxAmount)}
+                                            </span>
+                                            {' '}
+                                            из заработанных{' '}
+                                            {formatMoney(earned)}
+                                        </p>
+                                        {maxAmount <= 0 && earned > 0 && (
+                                            <ul className="mt-3 space-y-1 text-xs text-[var(--muted)]">
+                                                {(eligibility.paid_salary ?? 0) > 0 && (
+                                                    <li>
+                                                        Выплачено зарплаты:{' '}
+                                                        {formatMoney(eligibility.paid_salary)}
+                                                    </li>
+                                                )}
+                                                {(eligibility.paid_advances ?? 0) > 0 && (
+                                                    <li>
+                                                        Выплачено авансов:{' '}
+                                                        {formatMoney(eligibility.paid_advances)}
+                                                    </li>
+                                                )}
+                                                {(eligibility.reserved_advances ?? 0) > 0 && (
+                                                    <li>
+                                                        В активных заявках:{' '}
+                                                        {formatMoney(eligibility.reserved_advances)}
+                                                    </li>
+                                                )}
+                                            </ul>
+                                        )}
+                                    </div>
+
                                     <div>
                                         <label
                                             htmlFor="advance-amount"
@@ -142,6 +237,7 @@ export default function RequestAdvanceModal({
                                             id="advance-amount"
                                             type="number"
                                             min="1"
+                                            max={maxAmount > 0 ? maxAmount : undefined}
                                             step="1"
                                             inputMode="numeric"
                                             value={data.amount}
@@ -155,9 +251,9 @@ export default function RequestAdvanceModal({
                                             className="input-soft text-lg font-semibold"
                                             autoFocus
                                         />
-                                        {errors.amount && (
-                                            <p className="mt-2 text-sm text-[var(--muted)]">
-                                                {errors.amount}
+                                        {(errors.amount || clientError) && (
+                                            <p className="mt-2 text-sm font-medium text-red-600 [data-theme=dark]:text-red-400">
+                                                {errors.amount || clientError}
                                             </p>
                                         )}
                                     </div>
@@ -183,7 +279,7 @@ export default function RequestAdvanceModal({
                                             className="input-soft resize-none"
                                         />
                                         {errors.comment && (
-                                            <p className="mt-2 text-sm text-[var(--muted)]">
+                                            <p className="mt-2 text-sm font-medium text-red-600 [data-theme=dark]:text-red-400">
                                                 {errors.comment}
                                             </p>
                                         )}
@@ -192,7 +288,7 @@ export default function RequestAdvanceModal({
                                     <IslandButton
                                         type="submit"
                                         icon={ArrowRight}
-                                        disabled={processing}
+                                        disabled={processing || Boolean(clientError)}
                                         className="w-full justify-center"
                                     >
                                         {processing

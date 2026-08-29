@@ -5,13 +5,10 @@ declare(strict_types=1);
 namespace App\Notifications;
 
 use App\Models\AdvanceRequest;
-use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 
 final class AdvanceApprovedForPayment extends Notification
 {
-    use Queueable;
-
     public function __construct(
         private readonly AdvanceRequest $advance,
     ) {}
@@ -19,7 +16,12 @@ final class AdvanceApprovedForPayment extends Notification
     /** @return list<string> */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', 'broadcast'];
+    }
+
+    public function broadcastType(): string
+    {
+        return 'advance.approved_for_payment';
     }
 
     /** @return array<string, mixed> */
@@ -29,6 +31,7 @@ final class AdvanceApprovedForPayment extends Notification
 
         return [
             'type' => 'advance.approved_for_payment',
+            'event' => 'advance.approved_for_payment',
             'advance_id' => $advance->id,
             'user' => $advance->user?->name,
             'amount' => (float) $advance->amount,

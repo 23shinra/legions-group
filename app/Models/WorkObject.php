@@ -16,6 +16,7 @@ final class WorkObject extends Model
         'address',
         'start_date',
         'planned_end_date',
+        'work_days',
         'brigade_id',
         'status',
         'closed_at',
@@ -28,6 +29,7 @@ final class WorkObject extends Model
         return [
             'start_date' => 'date',
             'planned_end_date' => 'date',
+            'work_days' => 'integer',
             'status' => ObjectStatus::class,
             'closed_at' => 'datetime',
             'settlement' => 'array',

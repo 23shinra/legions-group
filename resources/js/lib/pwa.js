@@ -4,7 +4,7 @@ export async function registerServiceWorker() {
     }
 
     try {
-        return await navigator.serviceWorker.register('/sw.js', {
+        return await navigator.serviceWorker.register('/sw.js?v=3', {
             scope: '/',
         });
     } catch (error) {
@@ -22,7 +22,7 @@ export function notificationsSupported() {
 }
 
 export async function showLocalNotification({
-    title = 'Legions Group',
+    title = 'Legionis Group',
     body = '',
     url = '/',
 } = {}) {
@@ -35,8 +35,8 @@ export async function showLocalNotification({
     if (registration?.showNotification) {
         await registration.showNotification(title, {
             body,
-            icon: '/icon-192.png',
-            badge: '/favicon-32.png',
+            icon: '/icon-192.png?v=3',
+            badge: '/favicon-32.png?v=3',
             data: { url },
         });
         return true;
@@ -44,6 +44,6 @@ export async function showLocalNotification({
 
     // Fallback when SW is unavailable
     // eslint-disable-next-line no-new
-    new Notification(title, { body, icon: '/icon-192.png' });
+    new Notification(title, { body, icon: '/icon-192.png?v=3' });
     return true;
 }

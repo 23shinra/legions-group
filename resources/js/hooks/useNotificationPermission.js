@@ -40,7 +40,7 @@ export default function useNotificationPermission() {
 
             if (result === 'granted') {
                 await showLocalNotification({
-                    title: 'Legions Group',
+                    title: 'Legionis Group',
                     body: 'Уведомления включены',
                     url: '/settings',
                 });

@@ -17,7 +17,7 @@ enum PayType: string
             self::Daily => 'За день',
             self::Hourly => 'За час',
             self::Fixed => 'Фиксированная',
-            self::Custom => 'Индивидуальная',
+            self::Custom => 'Индивидуальная (как почасовая)',
         };
     }
 }

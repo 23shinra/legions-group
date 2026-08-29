@@ -81,7 +81,22 @@ final class User extends Authenticatable
 
     public function activeTimeEntry(): ?TimeEntry
     {
-        return $this->timeEntries()->whereNull('ended_at')->latest('started_at')->first();
+        return $this->timeEntries()
+            ->whereDate('started_at', today())
+            ->whereNull('ended_at')
+            ->whereNotNull('confirmed_at')
+            ->latest('started_at')
+            ->first();
+    }
+
+    public function pendingTimeEntry(): ?TimeEntry
+    {
+        return $this->timeEntries()
+            ->whereDate('started_at', today())
+            ->whereNull('ended_at')
+            ->whereNull('confirmed_at')
+            ->latest('started_at')
+            ->first();
     }
 
     public function isWorking(): bool

@@ -4,12 +4,13 @@ import PageHeader from '@/Components/ui/PageHeader';
 import StatPill from '@/Components/ui/StatPill';
 import StatusBadge from '@/Components/ui/StatusBadge';
 import AppLayout from '@/Layouts/AppLayout';
-import { formatDate, formatMoney, formatTime } from '@/lib/format';
+import { formatDate, formatHours, formatMoney, formatTime } from '@/lib/format';
 import { Head, Link, router } from '@inertiajs/react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
     ArrowRight,
     Buildings,
+    CalendarBlank,
     Clock,
     CurrencyCircleDollar,
     Play,
@@ -17,40 +18,101 @@ import {
     UsersThree,
     Wallet,
 } from '@phosphor-icons/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+
+function readGeolocation(timeoutMs = 1500) {
+    return new Promise((resolve) => {
+        if (!navigator.geolocation) {
+            resolve({});
+            return;
+        }
+
+        const timer = window.setTimeout(() => resolve({}), timeoutMs);
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                window.clearTimeout(timer);
+                resolve({
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                });
+            },
+            () => {
+                window.clearTimeout(timer);
+                resolve({});
+            },
+            { enableHighAccuracy: false, timeout: timeoutMs, maximumAge: 120_000 },
+        );
+    });
+}
 
 export default function Home({
     auth,
     todayObject,
+    tomorrowObject = null,
     brigade,
     activeEntry,
+    pendingEntry,
     balance = {},
     recentAdvances = [],
     advanceEligibility = {},
 }) {
     const isWorking = Boolean(activeEntry);
+    const isAwaiting = Boolean(pendingEntry);
     const user = auth?.user;
-    const [endOpen, setEndOpen] = useState(false);
-    const [ending, setEnding] = useState(false);
     const [advanceOpen, setAdvanceOpen] = useState(false);
+    const [busy, setBusy] = useState(false);
+    const [breakMinutes, setBreakMinutes] = useState('0');
+    const [endOpen, setEndOpen] = useState(false);
 
-    const handleTimeAction = () => {
-        if (isWorking) {
-            setEndOpen(true);
+    useEffect(() => {
+        if (!isAwaiting) {
+            return undefined;
+        }
+
+        const timer = window.setInterval(() => {
+            router.reload({
+                only: ['activeEntry', 'pendingEntry', 'todayObject'],
+                preserveScroll: true,
+                preserveState: true,
+            });
+        }, 3000);
+
+        return () => window.clearInterval(timer);
+    }, [isAwaiting]);
+
+    const markArrival = async () => {
+        if (busy || isWorking || isAwaiting || !todayObject) {
             return;
         }
 
-        router.post(route('time.start'));
+        setBusy(true);
+        // GPS опционален: ждём максимум ~1.2с, иначе отправляем сразу без координат.
+        const coords = await readGeolocation(1200);
+        router.post(route('worker.time.arrival'), coords, {
+            preserveScroll: true,
+            onFinish: () => setBusy(false),
+        });
     };
 
-    const confirmEnd = () => {
-        setEnding(true);
-        router.post(route('time.end'), {}, {
-            onFinish: () => {
-                setEnding(false);
-                setEndOpen(false);
+    const endShift = () => {
+        if (busy || !isWorking) {
+            return;
+        }
+
+        setBusy(true);
+        router.post(
+            route('worker.time.end'),
+            { break_minutes: Number.parseInt(breakMinutes, 10) || 0 },
+            {
+                preserveScroll: true,
+                onFinish: () => {
+                    setBusy(false);
+                    setEndOpen(false);
+                    setBreakMinutes('0');
+                },
             },
-        });
+        );
     };
 
     return (
@@ -73,42 +135,100 @@ export default function Home({
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, ease: [0.32, 0.72, 0, 1] }}
                 >
-                    <BezelCard padding="p-6 md:p-8">
-                        <div className="flex flex-col gap-6">
-                            <div className="flex flex-wrap items-center gap-3">
+                    <BezelCard padding="p-5 sm:p-6">
+                        <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
                                 <StatusBadge
-                                    status={isWorking ? 'working' : 'absent'}
+                                    status={
+                                        isWorking
+                                            ? 'working'
+                                            : isAwaiting
+                                              ? 'awaiting'
+                                              : 'absent'
+                                    }
                                 />
                                 {isWorking && activeEntry?.started_at && (
                                     <span className="text-sm text-[var(--muted)]">
-                                        Начало: {formatTime(activeEntry.started_at)}
+                                        с {formatTime(activeEntry.started_at)}
+                                    </span>
+                                )}
+                                {isAwaiting && pendingEntry?.started_at && (
+                                    <span className="text-sm text-[var(--muted)]">
+                                        отметили в {formatTime(pendingEntry.started_at)}
                                     </span>
                                 )}
                             </div>
+                            <p className="mt-2 text-sm leading-relaxed text-[var(--muted)] sm:text-base">
+                                {isWorking
+                                    ? 'Вы на объекте. Когда закончите — завершите смену.'
+                                    : isAwaiting
+                                      ? 'Бригадир подтвердит ваш приход на объект.'
+                                      : todayObject
+                                        ? 'Когда приедете на объект, отметьте приход — бригадир подтвердит.'
+                                        : 'Объект не назначен. Обратитесь к бригадиру.'}
+                            </p>
 
-                            <button
-                                type="button"
-                                onClick={handleTimeAction}
-                                className={`group flex w-full flex-col items-center justify-center gap-2 rounded-[1.5rem] px-4 py-6 text-center text-base font-bold leading-tight transition-fluid active:scale-[0.98] sm:flex-row sm:gap-4 sm:rounded-[1.75rem] sm:px-8 sm:py-8 sm:text-xl md:py-10 md:text-2xl ${
-                                    isWorking
-                                        ? 'bg-[var(--ink)] text-[var(--bg)] shadow-lift hover:opacity-90'
-                                        : 'bg-[var(--accent)] text-[var(--bg)] shadow-lift hover:opacity-90'
-                                }`}
-                            >
-                                {isWorking ? (
-                                    <>
-                                        <Stop size={28} weight="light" className="sm:hidden" />
-                                        <Stop size={32} weight="light" className="hidden sm:block" />
-                                        <span>ЗАКОНЧИТЬ РАБОТУ</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Play size={28} weight="light" className="sm:hidden" />
-                                        <Play size={32} weight="light" className="hidden sm:block" />
-                                        <span>НАЧАТЬ РАБОТУ</span>
-                                    </>
-                                )}
-                            </button>
+                            {!isWorking && !isAwaiting && todayObject && (
+                                <button
+                                    type="button"
+                                    onClick={markArrival}
+                                    disabled={busy}
+                                    className="mt-4 inline-flex min-h-12 items-center gap-2 rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-[var(--bg)] shadow-soft transition-fluid hover:opacity-90 active:scale-[0.98] disabled:opacity-60"
+                                >
+                                    <Play size={18} weight="bold" />
+                                    {busy ? 'Отправка…' : 'Я пришёл'}
+                                </button>
+                            )}
+
+                            {isWorking && !endOpen && (
+                                <button
+                                    type="button"
+                                    onClick={() => setEndOpen(true)}
+                                    disabled={busy}
+                                    className="mt-4 inline-flex min-h-12 items-center gap-2 rounded-full bg-[var(--surface)] px-5 py-3 text-sm font-semibold text-[var(--ink)] ring-1 ring-[var(--bezel-ring)] shadow-soft transition-fluid hover:bg-[var(--surface-muted)] active:scale-[0.98] disabled:opacity-60"
+                                >
+                                    <Stop size={18} weight="bold" />
+                                    Закончить работу
+                                </button>
+                            )}
+
+                            {isWorking && endOpen && (
+                                <div className="mt-4 space-y-3 rounded-2xl bg-[var(--surface-muted)] p-4 ring-1 ring-[var(--bezel-ring)]">
+                                    <label className="block">
+                                        <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">
+                                            Перерыв (минут)
+                                        </span>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="600"
+                                            value={breakMinutes}
+                                            onChange={(event) =>
+                                                setBreakMinutes(event.target.value)
+                                            }
+                                            className="w-full rounded-2xl border-0 bg-[var(--surface)] px-4 py-3 text-base font-semibold text-[var(--ink)] ring-1 ring-[var(--bezel-ring)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                                        />
+                                    </label>
+                                    <div className="flex flex-col gap-2 sm:flex-row-reverse">
+                                        <button
+                                            type="button"
+                                            onClick={endShift}
+                                            disabled={busy}
+                                            className="min-h-12 flex-1 rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-[var(--bg)] transition-fluid hover:opacity-90 disabled:opacity-60"
+                                        >
+                                            {busy ? 'Сохранение…' : 'Подтвердить окончание'}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setEndOpen(false)}
+                                            disabled={busy}
+                                            className="min-h-12 flex-1 rounded-full bg-[var(--surface)] px-5 py-3 text-sm font-semibold text-[var(--ink)] ring-1 ring-[var(--bezel-ring)] disabled:opacity-60"
+                                        >
+                                            Отмена
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </BezelCard>
                 </motion.div>
@@ -149,21 +269,86 @@ export default function Home({
                             </div>
                         </div>
                     </BezelCard>
+
+                    <BezelCard padding="p-5" className="sm:col-span-2">
+                        <div className="flex items-start gap-3">
+                            <CalendarBlank
+                                size={24}
+                                weight="light"
+                                className="mt-0.5 text-[var(--accent)]"
+                            />
+                            <div>
+                                <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-[var(--muted)]">
+                                    Завтра
+                                </p>
+                                <p className="mt-1 font-semibold text-[var(--ink)]">
+                                    {tomorrowObject
+                                        ? `${tomorrowObject.name}${
+                                              tomorrowObject.address
+                                                  ? ` · ${tomorrowObject.address}`
+                                                  : ''
+                                          }`
+                                        : 'Объект ещё не назначен'}
+                                </p>
+                            </div>
+                        </div>
+                    </BezelCard>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                     <StatPill
-                        label="К выплате"
-                        value={formatMoney(balance.remaining)}
-                        accent
+                        label="Смен отработано"
+                        value={
+                            balance.work_days
+                                ? `${balance.days ?? 0} / ${balance.work_days}`
+                                : String(balance.days ?? 0)
+                        }
+                        delay={0.05}
+                    />
+                    <StatPill
+                        label="Часов"
+                        value={formatHours(balance.minutes ?? 0)}
+                        icon={Clock}
+                        delay={0.08}
+                    />
+                    <StatPill
+                        label="Заработано"
+                        value={formatMoney(balance.accrued ?? 0)}
                         delay={0.1}
                     />
                     <StatPill
-                        label="Начислено"
-                        value={formatMoney(balance.accrued)}
-                        delay={0.15}
+                        label="К авансу"
+                        value={formatMoney(
+                            Math.min(
+                                balance.available_for_advance ?? 0,
+                                balance.accrued ?? 0,
+                            ),
+                        )}
+                        accent
+                        delay={0.12}
                     />
                 </div>
+
+                {balance.days_left != null && (
+                    <BezelCard padding="p-5">
+                        <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-[var(--muted)]">
+                            По объекту
+                        </p>
+                        <p className="mt-2 text-sm text-[var(--ink)]">
+                            Осталось смен:{' '}
+                            <span className="font-semibold">{balance.days_left}</span>
+                            {balance.projected_remaining > 0 && (
+                                <>
+                                    {' '}
+                                    · ещё можно заработать{' '}
+                                    <span className="font-semibold text-[var(--accent)]">
+                                        {formatMoney(balance.projected_remaining)}
+                                    </span>
+                                </>
+                            )}
+                        </p>
+                    </BezelCard>
+                )}
 
                 <div>
                     <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.2em] text-[var(--muted)]">
@@ -238,69 +423,6 @@ export default function Home({
                 onClose={() => setAdvanceOpen(false)}
                 eligibility={advanceEligibility}
             />
-
-            <AnimatePresence>
-                {endOpen && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
-                        className="fixed inset-0 z-50 flex items-end justify-center bg-[var(--overlay)] px-4 pb-[max(1rem,var(--safe-bottom))] backdrop-blur-sm sm:items-center sm:pb-4"
-                        onClick={() => !ending && setEndOpen(false)}
-                    >
-                        <motion.div
-                            initial={{ opacity: 0, y: 40, scale: 0.98 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: 24, scale: 0.98 }}
-                            transition={{ duration: 0.45, ease: [0.32, 0.72, 0, 1] }}
-                            className="w-full max-w-sm rounded-[1.75rem] bg-[var(--bezel)] p-1.5 shadow-lift sm:rounded-[2rem]"
-                            onClick={(e) => e.stopPropagation()}
-                            role="dialog"
-                            aria-modal="true"
-                            aria-labelledby="end-work-title"
-                        >
-                            <div className="rounded-[calc(1.75rem-0.375rem)] bg-[var(--surface)] p-5 sm:rounded-[calc(2rem-0.375rem)] sm:p-8">
-                                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-full bg-[var(--bezel)] text-[var(--ink)] sm:mb-5 sm:h-12 sm:w-12">
-                                    <Stop size={22} weight="light" />
-                                </div>
-                                <h2
-                                    id="end-work-title"
-                                    className="text-xl font-extrabold tracking-tight text-[var(--ink)] sm:text-2xl"
-                                >
-                                    Закончить работу?
-                                </h2>
-                                <p className="mt-2 text-sm text-[var(--muted)]">
-                                    Смена будет закрыта
-                                    {activeEntry?.started_at
-                                        ? ` (начало в ${formatTime(activeEntry.started_at)})`
-                                        : ''}
-                                    . Часы зафиксируются автоматически.
-                                </p>
-
-                                <div className="mt-6 flex flex-col gap-2.5 sm:mt-8 sm:flex-row-reverse sm:gap-3">
-                                    <button
-                                        type="button"
-                                        onClick={confirmEnd}
-                                        disabled={ending}
-                                        className="min-h-12 flex-1 rounded-full bg-[var(--accent)] px-5 py-3 text-base font-semibold text-[var(--bg)] transition-fluid hover:opacity-90 active:scale-[0.98] disabled:opacity-60"
-                                    >
-                                        {ending ? 'Сохранение…' : 'Да, закончить'}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setEndOpen(false)}
-                                        disabled={ending}
-                                        className="min-h-12 flex-1 rounded-full bg-[var(--surface)] px-5 py-3 text-base font-semibold text-[var(--ink)] ring-1 ring-[var(--bezel-ring)] transition-fluid hover:bg-[var(--surface-muted)] active:scale-[0.98] disabled:opacity-60"
-                                    >
-                                        Отмена
-                                    </button>
-                                </div>
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
         </AppLayout>
     );
 }

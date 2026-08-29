@@ -14,7 +14,7 @@ enum UserRole: string
     public function label(): string
     {
         return match ($this) {
-            self::Worker => 'Рабочий',
+            self::Worker => 'Строитель',
             self::Brigadier => 'Бригадир',
             self::Manager => 'Руководитель',
             self::Accountant => 'Бухгалтер',

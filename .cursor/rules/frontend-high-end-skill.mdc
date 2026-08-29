@@ -23,7 +23,7 @@ alwaysApply: false
 - **Карточки:** Double-Bezel через `BezelCard`
 - **Кнопки:** island / rounded-full, `transition-fluid` с `cubic-bezier(0.32,0.72,0,1)`
 - **Motion:** framer-motion fade/slide; без `linear` / `ease-in-out`
-- **Бренд:** Legions Group (`BrandLogo`), без цветных акцентов кроме Ч/Б
+- **Бренд:** Legionis Group (`BrandLogo`), без цветных акцентов кроме Ч/Б
 - **Мобилка:** safe-area, `min-h-[100dvh]`, без горизонтального overflow
 
 ## Анти-паттерны (запрещено)

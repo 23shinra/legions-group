@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\ObjectStatus;
+use App\Enums\UserRole;
 use App\Models\ActivityLog;
 use App\Models\TimeEntry;
 use App\Models\User;
 use App\Models\WorkObject;
+use App\Notifications\ObjectClosed;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -16,6 +18,7 @@ final readonly class ObjectCloseService
 {
     public function __construct(
         private PayrollService $payroll,
+        private RealtimeNotifier $realtime,
     ) {}
 
     /**
@@ -70,6 +73,26 @@ final readonly class ObjectCloseService
             ]);
 
             ActivityLog::record($actor, 'object.closed', $object, $settlement);
+
+            $fresh = $object->fresh(['brigade.brigadier']);
+            $recipients = User::query()
+                ->whereIn('role', [UserRole::Manager, UserRole::Accountant])
+                ->where('is_active', true)
+                ->get();
+
+            if ($fresh?->brigade?->brigadier) {
+                $recipients->push($fresh->brigade->brigadier);
+            }
+
+            foreach ($recipients->unique('id') as $recipient) {
+                if ((int) $recipient->id === (int) $actor->id) {
+                    continue;
+                }
+
+                $recipient->notify(new ObjectClosed($fresh, $settlement));
+            }
+
+            $this->realtime->ping($userIds, 'object.closed', $actor->id);
 
             return $settlement;
         });

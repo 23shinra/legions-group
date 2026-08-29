@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import {
     Buildings,
     Calculator,
+    CalendarBlank,
     ChartBar,
     Clock,
     CurrencyCircleDollar,
@@ -27,20 +28,24 @@ const ROLE_LINKS = {
     ],
     brigadier: [
         { href: 'brigadier.home', label: 'Бригада', icon: UsersThree },
+        { href: 'brigadier.advances.index', label: 'Авансы', icon: CurrencyCircleDollar },
     ],
     manager: [
         { href: 'manager.dashboard', label: 'Обзор', icon: ChartBar },
         { href: 'manager.employees.index', label: 'Сотрудники', icon: Users },
         { href: 'manager.brigades.index', label: 'Бригады', icon: UsersThree },
         { href: 'manager.objects.index', label: 'Объекты', icon: Buildings },
+        { href: 'manager.schedule.index', label: 'График', icon: CalendarBlank },
         { href: 'manager.advances.index', label: 'Авансы', icon: CurrencyCircleDollar },
         { href: 'manager.reports.index', label: 'Отчёты', icon: FileText },
+        { href: 'manager.activity.index', label: 'Журнал', icon: Clock },
     ],
     accountant: [
         { href: 'accountant.dashboard', label: 'Финансы', icon: Calculator },
         { href: 'accountant.advances.index', label: 'Авансы', icon: CurrencyCircleDollar },
         { href: 'accountant.payments.index', label: 'Выплаты', icon: Wallet },
         { href: 'accountant.reports.index', label: 'Отчёты', icon: FileText },
+        { href: 'accountant.activity.index', label: 'Журнал', icon: Clock },
     ],
 };
 
@@ -119,7 +124,7 @@ export default function AppLayout({ children, title }) {
                 <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-2 lg:gap-3">
                     <Link
                         href={route(links[0]?.href ?? 'dashboard')}
-                        className="flex shrink-0 items-center rounded-full bg-[var(--nav-glass)] px-2.5 py-2 shadow-soft backdrop-blur-xl transition-fluid hover:opacity-90 sm:px-3"
+                        className="block h-[52px] w-[60px] shrink-0 overflow-hidden rounded-full bg-black shadow-soft transition-fluid hover:opacity-90 sm:h-14 sm:w-16"
                     >
                         <BrandLogo variant="nav" />
                     </Link>
@@ -136,10 +141,12 @@ export default function AppLayout({ children, title }) {
                         </div>
                     </div>
 
-                    <div className="hidden shrink-0 items-center gap-2 lg:flex">
-                        <span className="max-w-[9rem] truncate rounded-full bg-[var(--bezel)] px-3 py-1.5 text-xs font-medium text-[var(--muted)] xl:max-w-[14rem] 2xl:max-w-none">
-                            {ROLE_LABELS[role] ?? role}
-                            {user?.name ? ` · ${user.name}` : ''}
+                    <div className="hidden min-w-0 shrink items-center gap-2 lg:flex">
+                        <span
+                            className="max-w-[11rem] truncate rounded-full bg-[var(--bezel)] px-3 py-1.5 text-xs font-medium text-[var(--muted)] xl:max-w-[16rem] 2xl:max-w-[22rem]"
+                            title={user?.name ?? undefined}
+                        >
+                            {user?.name ?? ROLE_LABELS[role] ?? role}
                         </span>
                         <NotificationBell />
                         <Link
@@ -188,7 +195,6 @@ export default function AppLayout({ children, title }) {
                     >
                         <div className="flex min-h-[100dvh] flex-col px-5 pb-[max(1.5rem,var(--safe-bottom))] pt-24">
                             <div className="mb-6">
-                                <BrandLogo className="mb-4 items-start" />
                                 <p className="truncate text-base font-semibold text-[var(--ink)]">
                                     {user?.name}
                                 </p>

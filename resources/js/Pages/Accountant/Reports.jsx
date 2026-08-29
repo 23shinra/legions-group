@@ -1,18 +1,45 @@
+import EmployeeReportList from '@/Components/Reports/EmployeeReportList';
 import BezelCard from '@/Components/ui/BezelCard';
 import PageHeader from '@/Components/ui/PageHeader';
+import SoftDatePicker from '@/Components/ui/SoftDatePicker';
 import AppLayout from '@/Layouts/AppLayout';
 import { formatHours, formatMoney } from '@/lib/format';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { motion } from 'framer-motion';
-import { ChartBar, CurrencyCircleDollar, Wallet } from '@phosphor-icons/react';
+import {
+    ChartBar,
+    Clock,
+    DownloadSimple,
+    Wallet,
+} from '@phosphor-icons/react';
+import { useState } from 'react';
 
-export default function Reports({ summary = {}, rows = [] }) {
+export default function Reports({ summary = {}, rows = [], filters = {} }) {
+    const [from, setFrom] = useState(filters.from ?? '');
+    const [to, setTo] = useState(filters.to ?? '');
+
     const cards = [
-        { label: 'Начислено', value: formatMoney(summary.totalAccrued ?? 0), icon: Wallet },
-        { label: 'Авансы', value: formatMoney(summary.totalAdvances ?? 0), icon: CurrencyCircleDollar },
-        { label: 'Выплачено', value: formatMoney(summary.totalPaid ?? 0), icon: ChartBar },
-        { label: 'К выплате', value: formatMoney(summary.totalRemaining ?? 0), icon: Wallet },
+        { label: 'Часы', value: formatHours(summary.totalHours ?? 0), icon: Clock },
+        { label: 'Заработано', value: formatMoney(summary.totalAccrued ?? 0), icon: Wallet },
+        { label: 'Опоздания', value: summary.totalLates ?? 0, icon: ChartBar },
+        { label: 'Остаток', value: formatMoney(summary.totalRemaining ?? 0), icon: Wallet },
     ];
+
+    const apply = (event) => {
+        event.preventDefault();
+        router.get(
+            route('accountant.reports.index'),
+            { from, to },
+            { preserveState: true, preserveScroll: true },
+        );
+    };
+
+    const query = new URLSearchParams({
+        from: from || '',
+        to: to || '',
+    }).toString();
+    const exportHref = `${route('accountant.reports.export')}?${query}`;
+    const pdfHref = `${route('accountant.reports.pdf')}?${query}`;
 
     return (
         <AppLayout>
@@ -22,7 +49,51 @@ export default function Reports({ summary = {}, rows = [] }) {
                 eyebrow="Финансы"
                 title="Финансовые отчёты"
                 subtitle={`Часов за период: ${formatHours(summary.totalHours ?? 0)}`}
+                actions={
+                    <div className="flex flex-wrap gap-2">
+                        <a
+                            href={pdfHref}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-2 rounded-full bg-[var(--surface)] px-5 py-2.5 text-sm font-semibold text-[var(--ink)] ring-1 ring-[var(--bezel-ring)]"
+                        >
+                            PDF
+                        </a>
+                        <a
+                            href={exportHref}
+                            className="inline-flex items-center gap-2 rounded-full bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-[var(--bg)] shadow-soft transition-fluid hover:opacity-90"
+                        >
+                            <DownloadSimple size={18} weight="light" />
+                            Excel
+                        </a>
+                    </div>
+                }
             />
+
+            <BezelCard className="mb-6" padding="p-4 sm:p-5">
+                <form onSubmit={apply} className="grid gap-3 sm:grid-cols-3">
+                    <div>
+                        <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">
+                            С
+                        </label>
+                        <SoftDatePicker value={from} onChange={setFrom} />
+                    </div>
+                    <div>
+                        <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">
+                            По
+                        </label>
+                        <SoftDatePicker value={to} onChange={setTo} />
+                    </div>
+                    <div className="flex items-end">
+                        <button
+                            type="submit"
+                            className="w-full rounded-full bg-[var(--surface)] px-4 py-3 text-sm font-semibold ring-1 ring-[var(--bezel-ring)]"
+                        >
+                            Применить
+                        </button>
+                    </div>
+                </form>
+            </BezelCard>
 
             <div className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-4">
                 {cards.map((card, i) => (
@@ -33,14 +104,16 @@ export default function Reports({ summary = {}, rows = [] }) {
                         transition={{ delay: i * 0.05, duration: 0.7, ease: [0.32, 0.72, 0, 1] }}
                     >
                         <BezelCard padding="p-5">
-                            <div className="flex items-start justify-between">
-                                <div>
+                            <div className="flex items-start justify-between gap-2">
+                                <div className="min-w-0">
                                     <p className="text-[10px] uppercase tracking-[0.15em] text-[var(--muted)]">
                                         {card.label}
                                     </p>
-                                    <p className="mt-1 text-xl font-bold">{card.value}</p>
+                                    <p className="mt-1 break-words text-base font-bold leading-tight sm:text-xl">
+                                        {card.value}
+                                    </p>
                                 </div>
-                                <card.icon size={22} weight="light" className="text-[var(--accent)]" />
+                                <card.icon size={22} weight="light" className="shrink-0 text-[var(--accent)]" />
                             </div>
                         </BezelCard>
                     </motion.div>
@@ -48,63 +121,16 @@ export default function Reports({ summary = {}, rows = [] }) {
             </div>
 
             <BezelCard padding="p-0">
-                <div className="border-b border-[var(--bezel-ring)] px-6 py-4">
+                <div className="border-b border-[var(--bezel-ring)] px-4 py-4 sm:px-6">
                     <h2 className="font-bold">По сотрудникам</h2>
+                    <p className="mt-1 text-sm text-[var(--muted)]">
+                        Нажмите на сотрудника для подробного отчёта
+                    </p>
                 </div>
-                <div className="table-scroll">
-                    <table className="w-full min-w-[640px] text-left text-sm">
-                        <thead>
-                            <tr className="border-b border-[var(--bezel-ring)] bg-[var(--surface-muted)]">
-                                <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--muted)]">
-                                    Сотрудник
-                                </th>
-                                <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--muted)]">
-                                    Часы
-                                </th>
-                                <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--muted)]">
-                                    Начислено
-                                </th>
-                                <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--muted)]">
-                                    Авансы
-                                </th>
-                                <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--muted)]">
-                                    Выплачено
-                                </th>
-                                <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--muted)]">
-                                    К выплате
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {rows.length === 0 ? (
-                                <tr>
-                                    <td colSpan={6} className="px-6 py-12 text-center text-[var(--muted)]">
-                                        Нет данных
-                                    </td>
-                                </tr>
-                            ) : (
-                                rows.map((row, i) => (
-                                    <motion.tr
-                                        key={row.id ?? i}
-                                        initial={{ opacity: 0, y: 12 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: i * 0.03, duration: 0.6, ease: [0.32, 0.72, 0, 1] }}
-                                        className="border-b border-[var(--bezel-ring)] last:border-0"
-                                    >
-                                        <td className="px-6 py-4 font-semibold">{row.user?.name ?? row.name}</td>
-                                        <td className="px-6 py-4">{formatHours(row.hours ?? 0)}</td>
-                                        <td className="px-6 py-4">{formatMoney(row.accrued ?? 0)}</td>
-                                        <td className="px-6 py-4">{formatMoney(row.advances ?? 0)}</td>
-                                        <td className="px-6 py-4">{formatMoney(row.paid ?? 0)}</td>
-                                        <td className="px-6 py-4 font-bold text-[var(--accent)]">
-                                            {formatMoney(row.remaining ?? 0)}
-                                        </td>
-                                    </motion.tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                <EmployeeReportList
+                    reports={rows}
+                    showRouteName="accountant.reports.show"
+                />
             </BezelCard>
         </AppLayout>
     );

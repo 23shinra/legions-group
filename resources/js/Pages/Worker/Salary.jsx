@@ -2,7 +2,7 @@ import BezelCard from '@/Components/ui/BezelCard';
 import PageHeader from '@/Components/ui/PageHeader';
 import StatPill from '@/Components/ui/StatPill';
 import AppLayout from '@/Layouts/AppLayout';
-import { formatMoney } from '@/lib/format';
+import { formatHours, formatMoney } from '@/lib/format';
 import { Head } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import {
@@ -55,6 +55,27 @@ export default function Salary({ balance = {} }) {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, ease: [0.32, 0.72, 0, 1] }}
+                className="mb-6 grid grid-cols-2 gap-3"
+            >
+                <StatPill
+                    label="Смен"
+                    value={
+                        balance.work_days
+                            ? `${balance.days ?? 0} / ${balance.work_days}`
+                            : String(balance.days ?? 0)
+                    }
+                />
+                <StatPill
+                    label="Часов"
+                    value={formatHours(balance.minutes ?? 0)}
+                    icon={Wallet}
+                />
+            </motion.div>
+
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, ease: [0.32, 0.72, 0, 1] }}
                 className="grid grid-cols-1 gap-4 sm:grid-cols-2"
             >
                 {rows.map((row, i) => (
@@ -88,7 +109,7 @@ export default function Salary({ balance = {} }) {
                             <MinusCircle size={18} weight="light" />
                             Удержано (авансы)
                         </dt>
-                        <dd className="font-bold text-neutral-500">
+                        <dd className="font-bold text-[var(--muted)]">
                             − {formatMoney(balance.advances)}
                         </dd>
                     </div>
@@ -110,6 +131,23 @@ export default function Salary({ balance = {} }) {
                             {formatMoney(balance.remaining)}
                         </dd>
                     </div>
+                    {balance.days_left != null && (
+                        <div className="mt-4 rounded-2xl bg-[var(--surface-muted)] p-4 text-sm text-[var(--muted)]">
+                            Осталось смен на объекте:{' '}
+                            <span className="font-semibold text-[var(--ink)]">
+                                {balance.days_left}
+                            </span>
+                            {balance.projected_remaining > 0 && (
+                                <>
+                                    {' '}
+                                    · ещё можно заработать{' '}
+                                    <span className="font-semibold text-[var(--accent)]">
+                                        {formatMoney(balance.projected_remaining)}
+                                    </span>
+                                </>
+                            )}
+                        </div>
+                    )}
                 </dl>
             </BezelCard>
         </AppLayout>

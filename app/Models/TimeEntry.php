@@ -14,6 +14,8 @@ final class TimeEntry extends Model
         'brigade_id',
         'work_object_id',
         'started_at',
+        'confirmed_at',
+        'confirmed_by',
         'ended_at',
         'break_minutes',
         'worked_minutes',
@@ -25,6 +27,7 @@ final class TimeEntry extends Model
     {
         return [
             'started_at' => 'datetime',
+            'confirmed_at' => 'datetime',
             'ended_at' => 'datetime',
             'latitude' => 'decimal:7',
             'longitude' => 'decimal:7',
@@ -46,8 +49,23 @@ final class TimeEntry extends Model
         return $this->belongsTo(WorkObject::class);
     }
 
+    public function confirmer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'confirmed_by');
+    }
+
     public function isOpen(): bool
     {
         return $this->ended_at === null;
+    }
+
+    public function isConfirmed(): bool
+    {
+        return $this->confirmed_at !== null;
+    }
+
+    public function isPendingConfirmation(): bool
+    {
+        return $this->isOpen() && ! $this->isConfirmed();
     }
 }

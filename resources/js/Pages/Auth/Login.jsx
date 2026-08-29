@@ -6,10 +6,13 @@ import { motion } from 'framer-motion';
 import {
     ArrowRight,
     Calculator,
+    Eye,
+    EyeSlash,
     HardHat,
     User,
     UsersThree,
 } from '@phosphor-icons/react';
+import { useState } from 'react';
 
 const ROLE_ICONS = {
     manager: HardHat,
@@ -19,6 +22,7 @@ const ROLE_ICONS = {
 };
 
 export default function Login({ status, demoAccounts = [] }) {
+    const [showPassword, setShowPassword] = useState(false);
     const { data, setData, post, processing, errors, reset } = useForm({
         email: '',
         password: '',
@@ -58,17 +62,11 @@ export default function Login({ status, demoAccounts = [] }) {
                         <h1 className="text-2xl font-extrabold tracking-tight text-[var(--ink)] sm:text-3xl md:text-4xl">
                             Вход в систему
                         </h1>
-                        <p className="mt-2 text-sm text-[var(--muted)] sm:text-base">
-                            Legions Group · контроль бригад
-                        </p>
-                        <p className="mt-1 text-sm text-[var(--muted)]">
-                            Логин: worker1 · Пароль: 123
-                        </p>
                     </div>
 
                     <BezelCard padding="p-5 sm:p-8" className="mb-4 sm:mb-5">
                         {status && (
-                            <div className="mb-5 rounded-2xl bg-neutral-100 px-4 py-3 text-sm font-medium text-neutral-800 ring-1 ring-neutral-200 sm:mb-6">
+                            <div className="mb-5 rounded-2xl bg-[var(--surface-muted)] px-4 py-3 text-sm font-medium text-[var(--ink)] ring-1 ring-[var(--bezel-ring)] sm:mb-6">
                                 {status}
                             </div>
                         )}
@@ -93,7 +91,7 @@ export default function Login({ status, demoAccounts = [] }) {
                                     className="input-soft"
                                 />
                                 {errors.email && (
-                                    <p className="mt-2 text-sm text-neutral-600">{errors.email}</p>
+                                    <p className="mt-2 text-sm text-[var(--muted)]">{errors.email}</p>
                                 )}
                             </div>
 
@@ -104,18 +102,32 @@ export default function Login({ status, demoAccounts = [] }) {
                                 >
                                     Пароль
                                 </label>
-                                <input
-                                    id="password"
-                                    type="password"
-                                    name="password"
-                                    value={data.password}
-                                    autoComplete="current-password"
-                                    placeholder="123"
-                                    onChange={(e) => setData('password', e.target.value)}
-                                    className="input-soft"
-                                />
+                                <div className="relative">
+                                    <input
+                                        id="password"
+                                        type={showPassword ? 'text' : 'password'}
+                                        name="password"
+                                        value={data.password}
+                                        autoComplete="current-password"
+                                        placeholder="123"
+                                        onChange={(e) => setData('password', e.target.value)}
+                                        className="input-soft pr-12"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword((value) => !value)}
+                                        className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-[var(--muted)] transition-fluid hover:text-[var(--ink)]"
+                                        aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+                                    >
+                                        {showPassword ? (
+                                            <EyeSlash size={20} weight="light" />
+                                        ) : (
+                                            <Eye size={20} weight="light" />
+                                        )}
+                                    </button>
+                                </div>
                                 {errors.password && (
-                                    <p className="mt-2 text-sm text-neutral-600">{errors.password}</p>
+                                    <p className="mt-2 text-sm text-[var(--muted)]">{errors.password}</p>
                                 )}
                             </div>
 
@@ -143,9 +155,9 @@ export default function Login({ status, demoAccounts = [] }) {
                                         key={account.login}
                                         type="button"
                                         onClick={() => quickLogin(account.login)}
-                                        className="group flex min-h-14 items-center gap-3 rounded-2xl bg-[var(--surface-muted)] px-3 py-3 text-left transition-fluid hover:bg-white hover:shadow-soft active:scale-[0.98]"
+                                        className="group flex min-h-14 items-center gap-3 rounded-2xl bg-[var(--surface-muted)] px-3 py-3 text-left transition-fluid hover:bg-[var(--surface)] hover:shadow-soft active:scale-[0.98]"
                                     >
-                                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--bezel)] text-[var(--accent)] transition-fluid group-hover:bg-[var(--accent)] group-hover:text-white">
+                                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--bezel)] text-[var(--accent)] transition-fluid group-hover:bg-[var(--accent)] group-hover:text-[var(--bg)]">
                                             <Icon size={18} weight="light" />
                                         </span>
                                         <span className="min-w-0">
