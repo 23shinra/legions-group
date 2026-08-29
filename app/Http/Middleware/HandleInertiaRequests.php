@@ -2,7 +2,10 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
+use App\Support\PayDefaults;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -58,13 +61,31 @@ class HandleInertiaRequests extends Middleware
                     ])
                     ->values()
                 : [],
-            'payroll' => \App\Support\PayDefaults::toArray(),
+            'payroll' => PayDefaults::toArray(),
             'vapidPublicKey' => config('webpush.vapid.public_key'),
-            'hasPushSubscription' => (bool) $request->user()?->pushSubscriptions()->exists(),
+            'hasPushSubscription' => $request->user() instanceof User
+                ? $this->userHasPushSubscription($request->user())
+                : false,
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
             ],
         ];
+    }
+
+    private function userHasPushSubscription(?User $user): bool
+    {
+        if ($user === null) {
+            return false;
+        }
+
+        $connection = config('webpush.database_connection') ?: config('database.default');
+        $table = (string) config('webpush.table_name', 'push_subscriptions');
+
+        if (! Schema::connection($connection)->hasTable($table)) {
+            return false;
+        }
+
+        return $user->pushSubscriptions()->exists();
     }
 }

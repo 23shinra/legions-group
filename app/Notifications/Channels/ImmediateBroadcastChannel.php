@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Notifications\Channels;
 
 use App\Notifications\Events\ImmediateBroadcastNotificationCreated;
+use Illuminate\Broadcasting\BroadcastException;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Notifications\Channels\BroadcastChannel;
 use Illuminate\Notifications\Messages\BroadcastMessage;
@@ -35,6 +36,12 @@ final class ImmediateBroadcastChannel extends BroadcastChannel
                 ->onQueue($message->queue);
         }
 
-        return $this->events->dispatch($event);
+        try {
+            return $this->events->dispatch($event);
+        } catch (BroadcastException $exception) {
+            report($exception);
+
+            return null;
+        }
     }
 }

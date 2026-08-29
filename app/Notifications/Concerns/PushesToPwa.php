@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Notifications\Concerns;
 
-use NotificationChannels\WebPush\WebPushChannel;
+use App\Notifications\Channels\QuietWebPushChannel;
 use NotificationChannels\WebPush\WebPushMessage;
 
 trait PushesToPwa
@@ -12,7 +12,7 @@ trait PushesToPwa
     /** @return list<string> */
     public function via(object $notifiable): array
     {
-        return ['database', 'broadcast', WebPushChannel::class];
+        return ['database', 'broadcast', QuietWebPushChannel::class];
     }
 
     public function toWebPush(object $notifiable, object $notification): WebPushMessage
