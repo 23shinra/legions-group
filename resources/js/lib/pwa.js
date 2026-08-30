@@ -27,7 +27,7 @@ export async function registerServiceWorker() {
     }
 
     try {
-        return await navigator.serviceWorker.register('/sw.js?v=5', {
+        return await navigator.serviceWorker.register('/sw.js?v=6', {
             scope: '/',
         });
     } catch (error) {

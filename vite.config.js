@@ -12,6 +12,10 @@ export default defineConfig({
             '@': path.resolve(__dirname, 'resources/js'),
         },
     },
+    build: {
+        target: ['es2020', 'safari14', 'ios14'],
+        cssTarget: 'safari14',
+    },
     plugins: [
         laravel({
             input: 'resources/js/app.jsx',
