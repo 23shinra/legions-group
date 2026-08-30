@@ -39,12 +39,15 @@ class AuthenticationTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $this->post('/login', [
+        $response = $this->post('/login', [
             'email' => $user->email,
             'password' => 'wrong-password',
         ]);
 
         $this->assertGuest();
+        $response->assertSessionHasErrors([
+            'email' => 'Неправильный логин или пароль.',
+        ]);
     }
 
     public function test_login_keeps_other_device_sessions_active(): void

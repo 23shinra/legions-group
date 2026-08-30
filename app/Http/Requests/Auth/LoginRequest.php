@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Services\RosterInstaller;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -36,15 +37,23 @@ class LoginRequest extends FormRequest
         $this->ensureIsNotRateLimited();
 
         $login = Str::lower(trim((string) $this->input('email')));
+        $authenticated = false;
 
-        if (! Auth::attempt([
-            'email' => $login,
-            'password' => $this->input('password'),
-        ], $this->boolean('remember'))) {
+        foreach (RosterInstaller::loginCandidatesFor($login) as $email) {
+            if (Auth::attempt([
+                'email' => $email,
+                'password' => $this->input('password'),
+            ], $this->boolean('remember'))) {
+                $authenticated = true;
+                break;
+            }
+        }
+
+        if (! $authenticated) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'email' => 'Неверный логин или пароль.',
+                'email' => 'Неправильный логин или пароль.',
             ]);
         }
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Models\User;
 use App\Services\RosterInstaller;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -63,11 +64,74 @@ final class RpmAuthTest extends TestCase
     {
         $this->seed();
 
-        $this->post('/login', [
+        $response = $this->post('/login', [
             'email' => 'islam.ashirov',
             'password' => '123',
         ]);
 
         $this->assertGuest();
+        $response->assertSessionHasErrors([
+            'email' => 'Неправильный логин или пароль.',
+        ]);
+    }
+
+    public function test_accountant_can_login_with_canonical_login(): void
+    {
+        $this->seed();
+
+        $response = $this->post('/login', [
+            'email' => 'ramilya.parhatova',
+            'password' => RosterInstaller::INITIAL_PASSWORD,
+        ]);
+
+        $this->assertAuthenticatedAs($this->rosterUser('ramilya.parhatova'));
+        $response->assertRedirect(route('dashboard', absolute: false));
+    }
+
+    public function test_accountant_can_login_with_legacy_login(): void
+    {
+        $this->seed();
+
+        User::query()->where('email', 'ramilya.parhatova')->update(['email' => 'accountant']);
+
+        $response = $this->post('/login', [
+            'email' => 'ramilya.parhatova',
+            'password' => RosterInstaller::INITIAL_PASSWORD,
+        ]);
+
+        $this->assertAuthenticated();
+        $response->assertRedirect(route('dashboard', absolute: false));
+    }
+
+    public function test_legacy_accountant_alias_can_login(): void
+    {
+        $this->seed();
+
+        User::query()->where('email', 'ramilya.parhatova')->update(['email' => 'accountant']);
+
+        $response = $this->post('/login', [
+            'email' => 'accountant',
+            'password' => RosterInstaller::INITIAL_PASSWORD,
+        ]);
+
+        $this->assertAuthenticated();
+        $response->assertRedirect(route('dashboard', absolute: false));
+    }
+
+    public function test_all_roster_accounts_can_login_with_initial_password(): void
+    {
+        $this->seed();
+
+        foreach (RosterInstaller::accounts() as $entry) {
+            $response = $this->post('/login', [
+                'email' => $entry['login'],
+                'password' => RosterInstaller::INITIAL_PASSWORD,
+            ]);
+
+            $this->assertAuthenticated();
+            $response->assertRedirect(route('dashboard', absolute: false));
+
+            auth()->logout();
+        }
     }
 }

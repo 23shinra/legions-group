@@ -47,6 +47,15 @@ export default function Login({ status }) {
                         )}
 
                         <form onSubmit={submit} className="space-y-4 sm:space-y-5">
+                            {(errors.email || errors.password) && (
+                                <div
+                                    role="alert"
+                                    className="rounded-2xl border border-red-500/35 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-700 ring-1 ring-red-500/20 [data-theme=dark]:text-red-300"
+                                >
+                                    {errors.email || errors.password}
+                                </div>
+                            )}
+
                             <div>
                                 <label
                                     htmlFor="email"
@@ -66,7 +75,7 @@ export default function Login({ status }) {
                                     className="input-soft"
                                 />
                                 {errors.email && (
-                                    <p className="mt-2 text-sm text-[var(--muted)]">{errors.email}</p>
+                                    <p className="mt-2 text-sm font-medium text-red-600 [data-theme=dark]:text-red-400">{errors.email}</p>
                                 )}
                             </div>
 
@@ -102,7 +111,7 @@ export default function Login({ status }) {
                                     </button>
                                 </div>
                                 {errors.password && (
-                                    <p className="mt-2 text-sm text-[var(--muted)]">{errors.password}</p>
+                                    <p className="mt-2 text-sm font-medium text-red-600 [data-theme=dark]:text-red-400">{errors.password}</p>
                                 )}
                             </div>
 

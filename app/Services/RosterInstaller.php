@@ -379,6 +379,31 @@ final class RosterInstaller
         };
     }
 
+    /**
+     * @return list<string>
+     */
+    public static function loginCandidatesFor(string $input): array
+    {
+        $input = strtolower(trim($input));
+        $candidates = [];
+
+        if ($input !== '') {
+            $candidates[] = $input;
+        }
+
+        foreach (self::accounts() as $entry) {
+            $login = $entry['login'];
+            $legacy = self::legacyEmailsFor($login);
+
+            if ($login === $input || in_array($input, $legacy, true)) {
+                $candidates[] = $login;
+                $candidates = array_merge($candidates, $legacy);
+            }
+        }
+
+        return array_values(array_unique($candidates));
+    }
+
     public function replace(): void
     {
         $this->wipe();
