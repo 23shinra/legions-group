@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\UserRole;
+use App\Models\Brigade;
 use App\Models\ObjectAssignment;
 use App\Models\User;
 use App\Models\WorkObject;
-use App\Enums\UserRole;
+use App\Notifications\AssignedToBrigade;
 use Illuminate\Validation\ValidationException;
 
 final readonly class ObjectAssignmentService
@@ -132,7 +134,13 @@ final readonly class ObjectAssignmentService
         }
 
         if ($object->brigade_id !== null && (int) $member->brigade_id !== (int) $object->brigade_id) {
+            $previousBrigadeId = $member->brigade_id;
             $member->update(['brigade_id' => $object->brigade_id]);
+            $brigade = $object->brigade ?? Brigade::query()->find($object->brigade_id);
+
+            if ($brigade !== null) {
+                AssignedToBrigade::sendToWorker($member, $brigade, $previousBrigadeId);
+            }
         }
 
         $current = $this->currentAssignment($member);

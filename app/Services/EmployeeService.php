@@ -11,6 +11,7 @@ use App\Models\ObjectAssignment;
 use App\Models\SalaryHistory;
 use App\Models\User;
 use App\Models\WorkObject;
+use App\Notifications\AssignedToBrigade;
 use App\Support\LoginGenerator;
 use App\Support\PayDefaults;
 use Illuminate\Support\Facades\DB;
@@ -94,6 +95,8 @@ final readonly class EmployeeService
             throw new InvalidArgumentException('Можно редактировать только сотрудника или бригадира.');
         }
 
+        $previousBrigadeId = $employee->brigade_id;
+
         $employee = DB::transaction(function () use ($employee, $data, $manager): User {
             $payType = isset($data['pay_type'])
                 ? PayType::from((string) $data['pay_type'])
@@ -148,6 +151,10 @@ final readonly class EmployeeService
 
         $this->realtime->pingAround($employee, 'roster.changed', $manager->id);
 
+        if ($employee->brigade !== null) {
+            AssignedToBrigade::sendToWorker($employee, $employee->brigade, $previousBrigadeId);
+        }
+
         return $employee;
     }
 
@@ -199,10 +206,12 @@ final readonly class EmployeeService
     {
         $this->assertStaff($employee);
 
+        $previousBrigadeId = $employee->brigade_id;
         $employee->update(['brigade_id' => $brigade->id]);
         $employee = $employee->fresh();
         $this->realtime->pingAround($employee, 'roster.changed');
         $this->realtime->ping([$brigade->brigadier_id], 'roster.changed');
+        AssignedToBrigade::sendToWorker($employee, $brigade, $previousBrigadeId);
 
         return $employee;
     }

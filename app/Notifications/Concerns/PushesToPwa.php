@@ -21,7 +21,7 @@ trait PushesToPwa
         $type = (string) ($data['type'] ?? $data['event'] ?? 'legionis');
         $tag = $type;
 
-        foreach (['advance_id', 'entry_id', 'payment_id', 'object_id', 'user_id'] as $key) {
+        foreach (['advance_id', 'entry_id', 'payment_id', 'object_id', 'brigade_id', 'user_id'] as $key) {
             if (! empty($data[$key])) {
                 $tag .= '-'.$data[$key];
                 break;
@@ -51,6 +51,7 @@ trait PushesToPwa
             str_contains($type, 'time') || str_contains($type, 'arrival') => 'Смена',
             str_contains($type, 'object') => 'Объект',
             str_contains($type, 'attendance') => 'Посещаемость',
+            str_contains($type, 'roster') => 'Бригада',
             default => 'Legionis Group',
         };
     }
