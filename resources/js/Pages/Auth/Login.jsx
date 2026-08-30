@@ -2,7 +2,6 @@ import BezelCard from '@/Components/ui/BezelCard';
 import BrandLogo from '@/Components/BrandLogo';
 import IslandButton from '@/Components/ui/IslandButton';
 import { Head, useForm } from '@inertiajs/react';
-import { motion } from 'framer-motion';
 import {
     ArrowRight,
     Eye,
@@ -32,12 +31,7 @@ export default function Login({ status }) {
             <div className="relative flex min-h-[100dvh] items-center justify-center overflow-x-hidden bg-[var(--bg)] px-4 py-10 sm:py-16">
                 <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgba(0,0,0,0.05),transparent_55%)]" />
 
-                <motion.div
-                    initial={{ opacity: 0, y: 24 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.9, ease: [0.32, 0.72, 0, 1] }}
-                    className="relative w-full max-w-md pb-[max(1rem,var(--safe-bottom))] pt-[max(0.5rem,var(--safe-top))]"
-                >
+                <div className="relative w-full max-w-md animate-[fadeInUp_0.6s_ease-out_both] pb-[max(1rem,var(--safe-bottom))] pt-[max(0.5rem,var(--safe-top))]">
                     <div className="mb-6 text-center sm:mb-8">
                         <BrandLogo className="mb-4 sm:mb-5" />
                         <h1 className="text-2xl font-extrabold tracking-tight text-[var(--ink)] sm:text-3xl md:text-4xl">
@@ -122,7 +116,7 @@ export default function Login({ status }) {
                             </IslandButton>
                         </form>
                     </BezelCard>
-                </motion.div>
+                </div>
             </div>
         </>
     );

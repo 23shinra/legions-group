@@ -10,6 +10,70 @@
         <meta name="mobile-web-app-title" content="Legionis">
         <meta name="apple-mobile-web-app-status-bar-style" content="default">
         <meta name="csrf-token" content="{{ csrf_token() }}">
+        @php
+            $buildManifestPath = public_path('build/manifest.json');
+            $buildId = is_file($buildManifestPath) ? (string) filemtime($buildManifestPath) : '0';
+        @endphp
+        <meta name="lg-build-id" content="{{ $buildId }}">
+        <script>
+            (function () {
+                var buildId = document.querySelector('meta[name="lg-build-id"]')?.getAttribute('content');
+                var storageKey = 'lg-build-id';
+                var previousBuildId = null;
+
+                try {
+                    previousBuildId = localStorage.getItem(storageKey);
+                } catch (error) {}
+
+                if (buildId && previousBuildId && previousBuildId !== buildId) {
+                    try {
+                        localStorage.setItem(storageKey, buildId);
+                    } catch (error) {}
+
+                    var cleanup = function () {
+                        var reloadUrl = window.location.pathname + window.location.search;
+                        var separator = reloadUrl.indexOf('?') === -1 ? '?' : '&';
+                        window.location.replace(reloadUrl + separator + '_=' + Date.now());
+                    };
+
+                    if ('serviceWorker' in navigator) {
+                        navigator.serviceWorker.getRegistrations()
+                            .then(function (registrations) {
+                                return Promise.all(registrations.map(function (registration) {
+                                    return registration.unregister();
+                                }));
+                            })
+                            .finally(cleanup);
+                    } else {
+                        cleanup();
+                    }
+
+                    return;
+                }
+
+                if (buildId) {
+                    try {
+                        localStorage.setItem(storageKey, buildId);
+                    } catch (error) {}
+                }
+
+                window.setTimeout(function () {
+                    var root = document.getElementById('app');
+
+                    if (!root || root.dataset.mounted === '1') {
+                        return;
+                    }
+
+                    root.innerHTML = ''
+                        + '<div style="min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px;font-family:system-ui,sans-serif;text-align:center;background:#f2f2f2;color:#111;">'
+                        + '<div style="max-width:320px;">'
+                        + '<p style="font-size:18px;font-weight:700;margin:0 0 12px;">Не удалось загрузить приложение</p>'
+                        + '<p style="font-size:14px;line-height:1.5;margin:0 0 16px;color:#555;">Обновите страницу. Если не поможет — очистите данные Safari для сайта.</p>'
+                        + '<button type="button" onclick="location.reload()" style="border:0;border-radius:999px;padding:12px 18px;font-size:15px;font-weight:600;background:#111;color:#fff;">Обновить</button>'
+                        + '</div></div>';
+                }, 8000);
+            })();
+        </script>
         <script>
             (function () {
                 try {

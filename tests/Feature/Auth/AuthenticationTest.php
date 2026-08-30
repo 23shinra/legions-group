@@ -15,6 +15,7 @@ class AuthenticationTest extends TestCase
         $response = $this->get('/login');
 
         $response->assertOk();
+        $response->assertSee('lg-build-id', false);
         $response->assertDontSee('Быстрый вход');
         $response->assertDontSee('worker1');
         $response->assertDontSee('123');

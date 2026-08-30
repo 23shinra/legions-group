@@ -20,6 +20,7 @@ createInertiaApp({
         const root = createRoot(el);
 
         root.render(<App {...props} />);
+        el.dataset.mounted = '1';
 
         registerServiceWorker();
     },
