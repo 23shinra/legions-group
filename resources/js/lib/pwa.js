@@ -21,19 +21,34 @@ function urlBase64ToUint8Array(base64String) {
     return output;
 }
 
+const SERVICE_WORKER_URL = '/sw.js?v=8';
+
+function serviceWorkerMatchesVersion(registration) {
+    const scriptUrl = registration?.active?.scriptURL
+        ?? registration?.waiting?.scriptURL
+        ?? registration?.installing?.scriptURL
+        ?? '';
+
+    return scriptUrl.includes('sw.js?v=8');
+}
+
 export async function registerServiceWorker() {
     if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
         return null;
     }
 
     try {
-        const registrations = await navigator.serviceWorker.getRegistrations();
+        const existing = await navigator.serviceWorker.getRegistration('/');
 
-        await Promise.all(
-            registrations.map((registration) => registration.unregister()),
-        );
+        if (existing && serviceWorkerMatchesVersion(existing)) {
+            return existing;
+        }
 
-        return await navigator.serviceWorker.register('/sw.js?v=7', {
+        if (existing) {
+            await existing.unregister();
+        }
+
+        return await navigator.serviceWorker.register(SERVICE_WORKER_URL, {
             scope: '/',
         });
     } catch (error) {

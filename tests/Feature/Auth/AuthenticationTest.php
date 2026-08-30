@@ -4,6 +4,7 @@ namespace Tests\Feature\Auth;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class AuthenticationTest extends TestCase
@@ -44,6 +45,32 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertGuest();
+    }
+
+    public function test_login_keeps_other_device_sessions_active(): void
+    {
+        $user = User::factory()->create();
+
+        DB::table('sessions')->insert([
+            'id' => 'existing-ipad-session',
+            'user_id' => $user->id,
+            'ip_address' => '127.0.0.1',
+            'user_agent' => 'iPad Safari',
+            'payload' => base64_encode(serialize([])),
+            'last_activity' => time(),
+        ]);
+
+        $response = $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect(route('dashboard', absolute: false));
+        $this->assertAuthenticated();
+        $this->assertDatabaseHas('sessions', [
+            'id' => 'existing-ipad-session',
+            'user_id' => $user->id,
+        ]);
     }
 
     public function test_users_can_logout(): void

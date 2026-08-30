@@ -1,4 +1,4 @@
-/* Legionis Group PWA service worker v7 */
+/* Legionis Group PWA service worker v8 */
 self.addEventListener('install', () => {
     self.skipWaiting();
 });

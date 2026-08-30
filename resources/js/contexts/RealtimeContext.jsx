@@ -138,12 +138,18 @@ export function RealtimeProvider({ children }) {
 
     useEffect(() => {
         if (!userId || !vapidPublicKey) {
-            return;
+            return undefined;
         }
 
-        if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-            subscribeToPush(vapidPublicKey).catch(() => {});
+        if (typeof Notification === 'undefined' || Notification.permission !== 'granted') {
+            return undefined;
         }
+
+        const timer = window.setTimeout(() => {
+            subscribeToPush(vapidPublicKey).catch(() => {});
+        }, 5000);
+
+        return () => window.clearTimeout(timer);
     }, [userId, vapidPublicKey]);
 
     const requestReload = useCallback(() => {
@@ -211,9 +217,29 @@ export function RealtimeProvider({ children }) {
             return undefined;
         }
 
-        const channelName = `App.Models.User.${userId}`;
-        const channel = window.Echo.private(channelName);
-        const pusher = window.Echo.connector?.pusher;
+        let channelName;
+        let pusher;
+
+        try {
+            channelName = `App.Models.User.${userId}`;
+            pusher = window.Echo.connector?.pusher;
+        } catch (error) {
+            console.warn('Realtime unavailable', error);
+            setSocketConnected(false);
+
+            return undefined;
+        }
+
+        let channel;
+
+        try {
+            channel = window.Echo.private(channelName);
+        } catch (error) {
+            console.warn('Realtime channel unavailable', error);
+            setSocketConnected(false);
+
+            return undefined;
+        }
 
         channel.notification((payload) => {
             const item = normalizeNotification(payload);
@@ -257,7 +283,12 @@ export function RealtimeProvider({ children }) {
         setSocketConnected(echoConnected());
 
         return () => {
-            window.Echo.leave(channelName);
+            try {
+                window.Echo.leave(channelName);
+            } catch {
+                // Ignore teardown errors on Safari.
+            }
+
             pusher?.connection.unbind('state_change', onStateChange);
 
             if (reloadTimer.current) {
