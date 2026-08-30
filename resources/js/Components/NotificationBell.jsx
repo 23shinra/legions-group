@@ -1,6 +1,5 @@
 import useRealtimeNotifications from '@/hooks/useRealtimeNotifications';
 import { router } from '@inertiajs/react';
-import { AnimatePresence, motion } from 'framer-motion';
 import { Bell, Checks } from '@phosphor-icons/react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -86,15 +85,8 @@ export default function NotificationBell() {
                 )}
             </button>
 
-            <AnimatePresence>
-                {open && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 8, scale: 0.98 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 6, scale: 0.98 }}
-                        transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
-                        className="absolute right-0 top-[calc(100%+0.6rem)] z-50 w-[min(22rem,calc(100vw-1.5rem))] overflow-hidden rounded-[1.5rem] bg-[var(--bezel)] p-1.5 shadow-lift"
-                    >
+            {open ? (
+                    <div className="absolute right-0 top-[calc(100%+0.6rem)] z-50 w-[min(22rem,calc(100vw-1.5rem))] overflow-hidden rounded-[1.5rem] bg-[var(--bezel)] p-1.5 shadow-lift">
                         <div className="rounded-[calc(1.5rem-0.375rem)] bg-[var(--surface)]">
                             <div className="flex items-center justify-between gap-2 border-b border-[var(--bezel-ring)] px-4 py-3">
                                 <p className="text-sm font-bold text-[var(--ink)]">
@@ -137,9 +129,8 @@ export default function NotificationBell() {
                                 )}
                             </ul>
                         </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                    </div>
+                ) : null}
         </div>
     );
 }

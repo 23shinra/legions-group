@@ -27,7 +27,9 @@ export default class ErrorBoundary extends Component {
                         </p>
                         <button
                             type="button"
-                            onClick={() => window.location.reload()}
+                            onClick={() => {
+                                window.location.assign(`${window.location.origin}/dashboard?_=${Date.now()}`);
+                            }}
                             className="mt-5 rounded-full bg-[var(--accent,#111)] px-5 py-3 text-sm font-semibold text-white"
                         >
                             Обновить

@@ -23,11 +23,6 @@ export default function useNotificationPermission() {
 
     useEffect(() => {
         setPermission(readPermission());
-        registerServiceWorker();
-
-        if (Notification.permission === 'granted') {
-            subscribeToPush(vapidPublicKey).catch(() => {});
-        }
     }, [vapidPublicKey]);
 
     const requestPermission = useCallback(async () => {

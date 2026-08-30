@@ -20,7 +20,8 @@ final class RpmAuthTest extends TestCase
 
         $this->actingAs($manager)
             ->get(route('manager.dashboard'))
-            ->assertOk();
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->component('Manager/Dashboard'));
     }
 
     public function test_worker_can_open_home(): void

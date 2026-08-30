@@ -1,5 +1,3 @@
-import { motion } from 'framer-motion';
-
 export default function PageHeader({
     eyebrow,
     title,
@@ -9,10 +7,7 @@ export default function PageHeader({
     className = '',
 }) {
     return (
-        <motion.header
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: [0.32, 0.72, 0, 1] }}
+        <header
             className={`mb-5 flex flex-col gap-3 sm:mb-7 sm:gap-4 md:mb-8 md:flex-row md:items-end md:justify-between ${className}`}
         >
             <div className="flex min-w-0 items-start gap-3 sm:gap-4">
@@ -38,6 +33,6 @@ export default function PageHeader({
                     {actions}
                 </div>
             )}
-        </motion.header>
+        </header>
     );
 }

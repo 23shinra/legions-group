@@ -3,7 +3,6 @@ import EnablePushBanner from '@/Components/EnablePushBanner';
 import NotificationBell from '@/Components/NotificationBell';
 import { RealtimeProvider } from '@/contexts/RealtimeContext';
 import { Link, router, usePage } from '@inertiajs/react';
-import { AnimatePresence, motion } from 'framer-motion';
 import {
     Buildings,
     Calculator,
@@ -187,15 +186,8 @@ export default function AppLayout({ children, title }) {
                 </div>
             </nav>
 
-            <AnimatePresence>
-                {menuOpen && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
-                        className="fixed inset-0 z-30 overflow-y-auto bg-[var(--surface)]/95 backdrop-blur-3xl lg:hidden"
-                    >
+            {menuOpen ? (
+                    <div className="fixed inset-0 z-30 overflow-y-auto bg-[var(--surface)]/95 backdrop-blur-3xl lg:hidden">
                         <div className="flex min-h-[100dvh] flex-col px-5 pb-[max(1.5rem,var(--safe-bottom))] pt-24">
                             <div className="mb-6">
                                 <p className="truncate text-base font-semibold text-[var(--ink)]">
@@ -207,17 +199,8 @@ export default function AppLayout({ children, title }) {
                             </div>
 
                             <nav className="flex flex-col gap-1">
-                                {links.map((link, i) => (
-                                    <motion.div
-                                        key={link.href}
-                                        initial={{ opacity: 0, y: 24 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{
-                                            delay: 0.05 + i * 0.04,
-                                            duration: 0.55,
-                                            ease: [0.32, 0.72, 0, 1],
-                                        }}
-                                    >
+                                {links.map((link) => (
+                                    <div key={link.href}>
                                         <Link
                                             href={route(link.href)}
                                             onClick={() => setMenuOpen(false)}
@@ -230,18 +213,10 @@ export default function AppLayout({ children, title }) {
                                             <link.icon size={24} weight="light" />
                                             {link.label}
                                         </Link>
-                                    </motion.div>
+                                    </div>
                                 ))}
 
-                                <motion.div
-                                    initial={{ opacity: 0, y: 24 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{
-                                        delay: 0.05 + links.length * 0.04,
-                                        duration: 0.55,
-                                        ease: [0.32, 0.72, 0, 1],
-                                    }}
-                                >
+                                <div>
                                     <Link
                                         href={route('settings')}
                                         onClick={() => setMenuOpen(false)}
@@ -254,7 +229,7 @@ export default function AppLayout({ children, title }) {
                                         <GearSix size={24} weight="light" />
                                         Настройки
                                     </Link>
-                                </motion.div>
+                                </div>
                             </nav>
 
                             <div className="mt-auto pt-8">
@@ -268,25 +243,15 @@ export default function AppLayout({ children, title }) {
                                 </button>
                             </div>
                         </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                    </div>
+                ) : null}
 
-            <AnimatePresence>
-                {logoutOpen && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
+            {logoutOpen ? (
+                    <div
                         className="fixed inset-0 z-50 flex items-end justify-center bg-[var(--overlay)] px-4 pb-[max(1rem,var(--safe-bottom))] backdrop-blur-sm sm:items-center sm:pb-4"
                         onClick={() => !loggingOut && setLogoutOpen(false)}
                     >
-                        <motion.div
-                            initial={{ opacity: 0, y: 40, scale: 0.98 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: 24, scale: 0.98 }}
-                            transition={{ duration: 0.45, ease: [0.32, 0.72, 0, 1] }}
+                        <div
                             className="w-full max-w-sm rounded-[1.75rem] bg-[var(--bezel)] p-1.5 shadow-lift sm:rounded-[2rem]"
                             onClick={(e) => e.stopPropagation()}
                             role="dialog"
@@ -326,10 +291,9 @@ export default function AppLayout({ children, title }) {
                                     </button>
                                 </div>
                             </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                        </div>
+                    </div>
+                ) : null}
 
             <main className="relative z-10 mx-auto w-full max-w-[1600px] px-3 pb-[max(3rem,calc(1.5rem+var(--safe-bottom)))] pt-[calc(4.5rem+var(--safe-top))] sm:px-4 sm:pt-28 lg:px-5 lg:pt-28">
                 {title && (

@@ -4,7 +4,6 @@ import StatusBadge from '@/Components/ui/StatusBadge';
 import AppLayout from '@/Layouts/AppLayout';
 import { brigadeTitle, formatHours, formatMoney, formatTime } from '@/lib/format';
 import { Head, Link, router } from '@inertiajs/react';
-import { motion } from 'framer-motion';
 import {
     ArrowRight,
     Buildings,
@@ -14,8 +13,6 @@ import {
     UsersThree,
     WarningCircle,
 } from '@phosphor-icons/react';
-
-const EASE = [0.32, 0.72, 0, 1];
 
 function scrollToId(id) {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -230,11 +227,7 @@ export default function Dashboard({
                 subtitle="Кто на объекте, кого нет и что требует решения"
             />
 
-            <motion.div
-                initial={{ opacity: 0, y: 18 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7, ease: EASE }}
-            >
+            <div>
                 <BezelCard padding="p-5 sm:p-6">
                     <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
                         <div className="flex items-center gap-3">
@@ -262,14 +255,11 @@ export default function Dashboard({
                         total={overview.totalEmployees}
                     />
                 </BezelCard>
-            </motion.div>
+            </div>
 
             <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-2 lg:gap-6">
-                <motion.section
+                <section
                     id="section-attention"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.05, duration: 0.7, ease: EASE }}
                 >
                     <BezelCard padding="p-0" className="h-full" innerClassName="flex h-full flex-col overflow-hidden p-0">
                         <div className="flex items-center justify-between gap-3 border-b border-[var(--bezel-ring)] bg-amber-500/8 px-5 py-4 sm:px-6">
@@ -342,13 +332,10 @@ export default function Dashboard({
                             </div>
                         ) : null}
                     </BezelCard>
-                </motion.section>
+                </section>
 
-                <motion.section
+                <section
                     id="section-absent"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1, duration: 0.7, ease: EASE }}
                 >
                     <BezelCard padding="p-0" className="h-full" innerClassName="flex h-full flex-col overflow-hidden p-0">
                         <div className="flex items-center justify-between gap-3 border-b border-[var(--bezel-ring)] px-5 py-4 sm:px-6">
@@ -388,7 +375,7 @@ export default function Dashboard({
                             </ul>
                         )}
                     </BezelCard>
-                </motion.section>
+                </section>
             </div>
 
             <section id="section-objects" className="mt-10 sm:mt-12">
@@ -419,16 +406,7 @@ export default function Dashboard({
                             const empty = present === 0;
 
                             return (
-                                <motion.div
-                                    key={object.id ?? `none-${i}`}
-                                    initial={{ opacity: 0, y: 24 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{
-                                        delay: 0.06 + i * 0.04,
-                                        duration: 0.65,
-                                        ease: EASE,
-                                    }}
-                                >
+                                <div key={object.id ?? `none-${i}`}>
                                     <BezelCard
                                         className={`h-full ${empty ? 'ring-1 ring-red-500/25' : ''}`}
                                         padding="p-0"
@@ -532,7 +510,7 @@ export default function Dashboard({
                                             </div>
                                         ) : null}
                                     </BezelCard>
-                                </motion.div>
+                                </div>
                             );
                         })}
                     </div>
@@ -560,15 +538,8 @@ export default function Dashboard({
                             const pending = brigade.pendingAdvances ?? 0;
 
                             return (
-                                <motion.div
+                                <div
                                     key={brigade.id}
-                                    initial={{ opacity: 0, y: 24 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{
-                                        delay: 0.06 + i * 0.05,
-                                        duration: 0.7,
-                                        ease: EASE,
-                                    }}
                                     className="group h-full cursor-pointer outline-none transition-fluid active:scale-[0.99]"
                                     onClick={() =>
                                         router.visit(route('manager.brigades.show', brigade.id))
@@ -660,7 +631,7 @@ export default function Dashboard({
                                             </div>
                                         ) : null}
                                     </BezelCard>
-                                </motion.div>
+                                </div>
                             );
                         })
                     )}
