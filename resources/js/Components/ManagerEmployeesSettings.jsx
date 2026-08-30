@@ -2,6 +2,7 @@ import BezelCard from '@/Components/ui/BezelCard';
 import IslandButton from '@/Components/ui/IslandButton';
 import SoftDatePicker from '@/Components/ui/SoftDatePicker';
 import SoftSelect from '@/Components/ui/SoftSelect';
+import { brigadeTitle } from '@/lib/format';
 import { useForm, usePage } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import {
@@ -229,7 +230,7 @@ export default function ManagerEmployeesSettings({
                                     { value: '', label: 'Без бригады' },
                                     ...brigades.map((brigade) => ({
                                         value: brigade.id,
-                                        label: brigade.name,
+                                        label: brigadeTitle(brigade),
                                     })),
                                 ]}
                             />

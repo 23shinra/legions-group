@@ -4,6 +4,7 @@ import PageHeader from '@/Components/ui/PageHeader';
 import SoftSelect from '@/Components/ui/SoftSelect';
 import StatusBadge from '@/Components/ui/StatusBadge';
 import AppLayout from '@/Layouts/AppLayout';
+import { brigadeTitle } from '@/lib/format';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import {
@@ -69,11 +70,11 @@ export default function Show({
 
     return (
         <AppLayout>
-            <Head title={brigade?.name ?? 'Бригада'} />
+            <Head title={brigadeTitle(brigade)} />
 
             <PageHeader
                 eyebrow="Бригада"
-                title={brigade?.name ?? '—'}
+                title={brigadeTitle(brigade)}
                 subtitle={
                     brigade?.object
                         ? `Объект: ${brigade.object.name}`

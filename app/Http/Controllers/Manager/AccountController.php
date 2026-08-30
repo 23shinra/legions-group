@@ -20,7 +20,7 @@ final class AccountController extends Controller
     {
         return Inertia::render('Manager/Accounts/Index', [
             'accounts' => $accounts->list($request->string('q')->toString() ?: null)
-                ->load('brigade')
+                ->load('brigade.brigadier')
                 ->map(fn (User $user): array => $this->accountPayload($user))
                 ->values()
                 ->all(),
@@ -33,7 +33,7 @@ final class AccountController extends Controller
 
     public function edit(User $account): Response
     {
-        $account->load('brigade');
+        $account->load('brigade.brigadier');
 
         return Inertia::render('Manager/Accounts/Edit', [
             'account' => $this->accountPayload($account),
@@ -95,7 +95,14 @@ final class AccountController extends Controller
             'role' => $user->role->value,
             'role_label' => $user->role->label(),
             'is_active' => $user->is_active,
-            'brigade' => $user->brigade?->only(['id', 'name']),
+            'brigade' => $user->brigade === null
+                ? null
+                : [
+                    'id' => $user->brigade->id,
+                    'name' => $user->brigade->name,
+                    'display_name' => $user->brigade->displayName(),
+                    'brigadier' => $user->brigade->brigadier,
+                ],
         ];
     }
 }

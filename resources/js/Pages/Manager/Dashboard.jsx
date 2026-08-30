@@ -2,7 +2,7 @@ import BezelCard from '@/Components/ui/BezelCard';
 import PageHeader from '@/Components/ui/PageHeader';
 import StatusBadge from '@/Components/ui/StatusBadge';
 import AppLayout from '@/Layouts/AppLayout';
-import { formatHours, formatMoney, formatTime } from '@/lib/format';
+import { brigadeTitle, formatHours, formatMoney, formatTime } from '@/lib/format';
 import { Head, Link, router } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import {
@@ -593,8 +593,8 @@ export default function Dashboard({
                                                 <span className="inline-flex rounded-full bg-[var(--bezel)] px-3 py-1 text-[10px] font-medium uppercase tracking-[0.2em] text-[var(--muted)]">
                                                     Бригада
                                                 </span>
-                                                <h3 className="mt-2 truncate text-xl font-extrabold tracking-tight text-[var(--ink)] sm:text-2xl">
-                                                    {brigade.name}
+                                                <h3 className="mt-2 text-xl font-extrabold tracking-tight text-[var(--ink)] sm:text-2xl">
+                                                    {brigadeTitle(brigade)}
                                                 </h3>
                                                 {brigade.object ? (
                                                     <p className="mt-1.5 flex items-center gap-2 text-sm text-[var(--muted)]">

@@ -126,4 +126,24 @@ final class User extends Authenticatable
     {
         return $this->role === UserRole::Worker;
     }
+
+    public function familyName(): string
+    {
+        $last = trim((string) $this->last_name);
+        $first = trim((string) $this->first_name);
+
+        if ($last !== '' && $first !== '') {
+            return $last.' '.$first;
+        }
+
+        if ($last !== '') {
+            return $last;
+        }
+
+        if ($first !== '') {
+            return $first;
+        }
+
+        return $this->name;
+    }
 }

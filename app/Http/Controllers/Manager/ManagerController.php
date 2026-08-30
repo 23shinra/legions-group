@@ -182,6 +182,7 @@ final class ManagerController extends Controller
                 return [
                     'id' => $brigade->id,
                     'name' => $brigade->name,
+                    'display_name' => $brigade->displayName(),
                     'brigadier' => $brigade->brigadier,
                     'object' => $brigade->activeObject(),
                     'membersCount' => $membersCount,
@@ -254,7 +255,7 @@ final class ManagerController extends Controller
                 'owed' => $request->boolean('owed'),
             ],
             'status' => session('status'),
-            'brigades' => Brigade::query()->orderBy('name')->get(['id', 'name']),
+            'brigades' => Brigade::options(),
             'payTypes' => collect(PayType::cases())->map(fn (PayType $type) => [
                 'value' => $type->value,
                 'label' => $type->label(),
@@ -265,7 +266,7 @@ final class ManagerController extends Controller
     public function showEmployee(User $employee, PayrollService $payroll): Response
     {
         return Inertia::render('Manager/Employees/Show', [
-            'employee' => $employee->load('brigade', 'salaryHistories'),
+            'employee' => $employee->load('brigade.brigadier', 'salaryHistories'),
             'balance' => $payroll->balanceFor($employee),
             'recentEntries' => $employee->timeEntries()->with('workObject')->latest('started_at')->limit(20)->get(),
             'recentAdvances' => $employee->advanceRequests()->latest()->limit(20)->get(),
@@ -273,7 +274,7 @@ final class ManagerController extends Controller
                 ->with('workObject')
                 ->latest('started_on')
                 ->get(),
-            'brigades' => Brigade::query()->orderBy('name')->get(['id', 'name']),
+            'brigades' => Brigade::options(),
             'payTypes' => collect(PayType::cases())->map(fn (PayType $type) => [
                 'value' => $type->value,
                 'label' => $type->label(),
@@ -337,6 +338,7 @@ final class ManagerController extends Controller
                 return [
                     'id' => $brigade->id,
                     'name' => $brigade->name,
+                    'display_name' => $brigade->displayName(),
                     'brigadier' => $brigade->brigadier,
                     'members_count' => $memberIds->count(),
                     'at_work' => $memberIds->intersect($atWorkIds)->count(),
@@ -432,6 +434,7 @@ final class ManagerController extends Controller
             'brigade' => [
                 'id' => $brigade->id,
                 'name' => $brigade->name,
+                'display_name' => $brigade->displayName(),
                 'brigadier_id' => $brigade->brigadier_id,
                 'brigadier' => $brigade->brigadier,
                 'object' => $object,
@@ -485,7 +488,7 @@ final class ManagerController extends Controller
     {
         return Inertia::render('Manager/Objects/Index', [
             'objects' => WorkObject::query()->with('brigade')->latest()->get(),
-            'brigades' => Brigade::query()->with('brigadier')->orderBy('name')->get(),
+            'brigades' => Brigade::options(),
         ]);
     }
 
@@ -523,6 +526,7 @@ final class ManagerController extends Controller
             $brigades[] = [
                 'id' => $brigade->id,
                 'name' => $brigade->name,
+                'display_name' => $brigade->displayName(),
                 'brigadier' => $brigade->brigadier,
                 'members_count' => $memberIds->count(),
                 'at_work' => $memberIds->intersect($atWorkIds)->count(),
@@ -541,7 +545,7 @@ final class ManagerController extends Controller
 
         return Inertia::render('Manager/Objects/Show', [
             'object' => $object,
-            'brigades' => Brigade::query()->with('brigadier')->orderBy('name')->get(),
+            'brigades' => Brigade::options(),
             'brigadesOnObject' => $brigades,
             'workers' => $assigned->map(function (ObjectAssignment $row) use ($atWorkIds) {
                 $user = $row->user;

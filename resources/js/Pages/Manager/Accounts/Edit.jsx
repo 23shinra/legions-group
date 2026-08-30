@@ -3,6 +3,7 @@ import IslandButton from '@/Components/ui/IslandButton';
 import PageHeader from '@/Components/ui/PageHeader';
 import SoftSelect from '@/Components/ui/SoftSelect';
 import AppLayout from '@/Layouts/AppLayout';
+import { brigadeTitle } from '@/lib/format';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Check, Key } from '@phosphor-icons/react';
@@ -334,7 +335,7 @@ export default function Edit({ account, roles = [], status }) {
                                     )}
                                     className="font-medium text-[var(--ink)] underline-offset-2 hover:underline"
                                 >
-                                    {account.brigade.name}
+                                    {brigadeTitle(account.brigade)}
                                 </Link>
                             </p>
                         )}

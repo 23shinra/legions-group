@@ -19,7 +19,7 @@ final class SettingsController
         return Inertia::render('Settings/Index', [
             'status' => session('status'),
             'brigades' => $user?->isManager()
-                ? Brigade::query()->orderBy('name')->get(['id', 'name'])
+                ? Brigade::options()
                 : [],
             'payTypes' => $user?->isManager()
                 ? collect(PayType::cases())->map(fn (PayType $type): array => [

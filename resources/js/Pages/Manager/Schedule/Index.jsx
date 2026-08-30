@@ -3,6 +3,7 @@ import PageHeader from '@/Components/ui/PageHeader';
 import SoftDatePicker from '@/Components/ui/SoftDatePicker';
 import SoftSelect from '@/Components/ui/SoftSelect';
 import AppLayout from '@/Layouts/AppLayout';
+import { brigadeTitle } from '@/lib/format';
 import { Head, router } from '@inertiajs/react';
 import { CalendarBlank } from '@phosphor-icons/react';
 import { useMemo, useState } from 'react';
@@ -108,7 +109,7 @@ export default function Index({
                                 { value: '', label: 'Выберите бригаду' },
                                 ...brigades.map((brigade) => ({
                                     value: brigade.id,
-                                    label: brigade.name,
+                                    label: brigadeTitle(brigade),
                                 })),
                             ]}
                         />

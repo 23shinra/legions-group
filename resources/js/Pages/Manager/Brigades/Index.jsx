@@ -4,6 +4,7 @@ import PageHeader from '@/Components/ui/PageHeader';
 import SoftSelect from '@/Components/ui/SoftSelect';
 import StatusBadge from '@/Components/ui/StatusBadge';
 import AppLayout from '@/Layouts/AppLayout';
+import { brigadeTitle, personName } from '@/lib/format';
 import { Head, router, useForm } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import { Buildings, Plus, UsersThree } from '@phosphor-icons/react';
@@ -125,16 +126,16 @@ export default function Index({ brigades = [], brigadiers = [] }) {
                                         <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-[var(--muted)]">
                                             Бригада
                                         </p>
-                                        <h3 className="mt-1 truncate text-xl font-extrabold tracking-tight">
-                                            {brigade.name}
+                                        <h3 className="mt-1 text-xl font-extrabold tracking-tight">
+                                            {brigadeTitle(brigade)}
                                         </h3>
                                     </div>
                                     <UsersThree size={24} weight="light" className="shrink-0 text-[var(--accent)]" />
                                 </div>
 
                                 {brigade.brigadier && (
-                                    <p className="mt-3 truncate text-sm text-[var(--muted)]">
-                                        Бригадир: {brigade.brigadier.name}
+                                    <p className="mt-3 text-sm text-[var(--muted)]">
+                                        Бригадир: {personName(brigade.brigadier)}
                                     </p>
                                 )}
 

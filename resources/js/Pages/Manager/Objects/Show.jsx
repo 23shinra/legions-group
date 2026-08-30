@@ -5,7 +5,7 @@ import SoftDatePicker from '@/Components/ui/SoftDatePicker';
 import SoftSelect from '@/Components/ui/SoftSelect';
 import StatusBadge from '@/Components/ui/StatusBadge';
 import AppLayout from '@/Layouts/AppLayout';
-import { formatDate, formatHours, formatMoney } from '@/lib/format';
+import { brigadeTitle, formatDate, formatHours, formatMoney } from '@/lib/format';
 import { ensurePushSubscription } from '@/lib/pwa';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { motion } from 'framer-motion';
@@ -171,7 +171,7 @@ export default function Show({
                                     { value: '', label: 'Без бригады' },
                                     ...brigades.map((brigade) => ({
                                         value: brigade.id,
-                                        label: brigade.name,
+                                        label: brigadeTitle(brigade),
                                     })),
                                 ]}
                             />
@@ -344,7 +344,7 @@ export default function Show({
                                 className="flex items-center justify-between px-6 py-4"
                             >
                                 <div>
-                                    <p className="font-semibold">{brigade.name}</p>
+                                    <p className="font-semibold">{brigadeTitle(brigade)}</p>
                                     {brigade.brigadier && (
                                         <p className="text-sm text-[var(--muted)]">
                                             {brigade.brigadier.name}

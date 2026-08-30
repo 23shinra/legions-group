@@ -190,12 +190,6 @@ final class RosterInstaller
     public function seed(): void
     {
         $hourlyRate = PayDefaults::hourlyRate();
-        $brigadeNames = [
-            'Бригада Кадырова А.',
-            'Бригада Абдурашитова',
-            'Бригада Нурматова',
-            'Бригада Кадырова Т.',
-        ];
 
         $manager = $this->createAccount(
             collect(self::accounts())->firstWhere('role', UserRole::Manager),
@@ -208,7 +202,6 @@ final class RosterInstaller
         );
 
         $brigades = [];
-        $brigadierIndex = 0;
 
         foreach (self::accounts() as $entry) {
             if ($entry['role'] !== UserRole::Brigadier) {
@@ -218,13 +211,12 @@ final class RosterInstaller
             $brigadier = $this->createAccount($entry, $hourlyRate);
 
             $brigade = Brigade::query()->create([
-                'name' => $brigadeNames[$brigadierIndex],
+                'name' => $brigadier->familyName(),
                 'brigadier_id' => $brigadier->id,
             ]);
 
             $brigadier->update(['brigade_id' => $brigade->id]);
             $brigades[] = $brigade;
-            $brigadierIndex++;
 
             SalaryHistory::query()->create([
                 'user_id' => $brigadier->id,

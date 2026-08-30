@@ -28,7 +28,7 @@ final class ScheduleController extends Controller
                 ->where('status', '!=', ObjectStatus::Closed->value)
                 ->orderBy('name')
                 ->get(['id', 'name', 'address']),
-            'brigades' => Brigade::query()->orderBy('name')->get(['id', 'name']),
+            'brigades' => Brigade::options(),
         ]);
     }
 

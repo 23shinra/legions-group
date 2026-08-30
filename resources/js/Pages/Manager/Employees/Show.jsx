@@ -5,7 +5,7 @@ import SoftSelect from '@/Components/ui/SoftSelect';
 import StatPill from '@/Components/ui/StatPill';
 import StatusBadge from '@/Components/ui/StatusBadge';
 import AppLayout from '@/Layouts/AppLayout';
-import { formatDate, formatHours, formatMoney, formatTime } from '@/lib/format';
+import { brigadeTitle, formatDate, formatHours, formatMoney, formatTime } from '@/lib/format';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import {
     ArrowCounterClockwise,
@@ -118,7 +118,7 @@ export default function Show({
                 />
                 {employee?.brigade && (
                     <span className="rounded-full bg-[var(--bezel)] px-3 py-1 text-xs font-medium text-[var(--muted)]">
-                        {employee.brigade.name}
+                        {brigadeTitle(employee.brigade)}
                     </span>
                 )}
                 {employee?.role && (
@@ -198,7 +198,7 @@ export default function Show({
                                 { value: '', label: 'Без бригады' },
                                 ...brigades.map((brigade) => ({
                                     value: brigade.id,
-                                    label: brigade.name,
+                                    label: brigadeTitle(brigade),
                                 })),
                             ]}
                         />

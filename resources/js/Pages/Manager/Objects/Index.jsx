@@ -5,7 +5,7 @@ import SoftDatePicker from '@/Components/ui/SoftDatePicker';
 import SoftSelect from '@/Components/ui/SoftSelect';
 import StatusBadge from '@/Components/ui/StatusBadge';
 import AppLayout from '@/Layouts/AppLayout';
-import { formatDate } from '@/lib/format';
+import { brigadeTitle, formatDate } from '@/lib/format';
 import { Head, router, useForm } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import { Buildings, Plus } from '@phosphor-icons/react';
@@ -95,7 +95,7 @@ export default function Index({ objects = [], brigades = [] }) {
                                     { value: '', label: 'Без бригады' },
                                     ...brigades.map((brigade) => ({
                                         value: brigade.id,
-                                        label: brigade.name,
+                                        label: brigadeTitle(brigade),
                                     })),
                                 ]}
                             />

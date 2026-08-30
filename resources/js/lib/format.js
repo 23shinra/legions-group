@@ -24,6 +24,34 @@ export function formatTime(date) {
     }).format(new Date(date));
 }
 
+export function personName(person) {
+    const last = String(person?.last_name ?? '').trim();
+    const first = String(person?.first_name ?? '').trim();
+
+    if (last && first) {
+        return `${last} ${first}`;
+    }
+
+    if (last) {
+        return last;
+    }
+
+    if (first) {
+        return first;
+    }
+
+    return String(person?.name ?? '').trim();
+}
+
+export function brigadeTitle(brigade) {
+    return (
+        brigade?.display_name ||
+        personName(brigade?.brigadier) ||
+        brigade?.name ||
+        '—'
+    );
+}
+
 export function formatDateTime(date) {
     if (!date) return '—';
     return new Intl.DateTimeFormat('ru-RU', {
