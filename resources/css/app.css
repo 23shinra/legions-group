@@ -77,7 +77,7 @@
 
     body.menu-locked {
         overflow: hidden;
-        touch-action: none;
+        touch-action: manipulation;
     }
 
     ::selection {

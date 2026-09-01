@@ -1,4 +1,5 @@
 import IslandButton from '@/Components/ui/IslandButton';
+import { useVisualViewportInset, scrollFieldIntoView } from '@/hooks/useVisualViewportInset';
 import { formatHours, formatMoney } from '@/lib/format';
 import { ensurePushSubscription } from '@/lib/pwa';
 import { useForm, usePage } from '@inertiajs/react';
@@ -19,6 +20,7 @@ export default function RequestAdvanceModal({
     const earned = Number(eligibility.accrued ?? 0);
 
     const vapidPublicKey = usePage().props.vapidPublicKey;
+    const { bottom: keyboardInset } = useVisualViewportInset(open);
     const { data, setData, post, processing, errors, reset, clearErrors } =
         useForm({
             amount: '',
@@ -83,9 +85,13 @@ export default function RequestAdvanceModal({
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
-                    className="fixed inset-0 z-50 flex items-end justify-center bg-[var(--overlay)] px-4 pb-[max(1rem,var(--safe-bottom))] backdrop-blur-sm sm:items-center sm:pb-4"
+                    className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-[var(--overlay)] backdrop-blur-sm"
+                    style={{
+                        paddingBottom: `max(1rem, calc(var(--safe-bottom) + ${keyboardInset}px))`,
+                    }}
                     onClick={() => !processing && onClose()}
                 >
+                    <div className="flex min-h-full items-end justify-center px-4 pt-4 sm:items-center sm:py-4">
                     <motion.div
                         initial={{ opacity: 0, y: 40, scale: 0.98 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -94,7 +100,7 @@ export default function RequestAdvanceModal({
                             duration: 0.45,
                             ease: [0.32, 0.72, 0, 1],
                         }}
-                        className="w-full max-w-md rounded-[1.75rem] bg-[var(--bezel)] p-1.5 shadow-lift sm:rounded-[2rem]"
+                        className="w-full max-w-md max-h-[min(88dvh,calc(100%-2rem))] overflow-y-auto overscroll-contain rounded-[1.75rem] bg-[var(--bezel)] p-1.5 shadow-lift sm:max-h-none sm:rounded-[2rem]"
                         onClick={(e) => e.stopPropagation()}
                         role="dialog"
                         aria-modal="true"
@@ -251,6 +257,7 @@ export default function RequestAdvanceModal({
                                                     e.target.value,
                                                 )
                                             }
+                                            onFocus={scrollFieldIntoView}
                                             placeholder="50000"
                                             className="input-soft text-lg font-semibold"
                                             autoFocus
@@ -279,6 +286,7 @@ export default function RequestAdvanceModal({
                                                     e.target.value,
                                                 )
                                             }
+                                            onFocus={scrollFieldIntoView}
                                             placeholder="Причина запроса (необязательно)"
                                             className="input-soft resize-none"
                                         />
@@ -303,6 +311,7 @@ export default function RequestAdvanceModal({
                             )}
                         </div>
                     </motion.div>
+                    </div>
                 </motion.div>
             )}
         </AnimatePresence>
