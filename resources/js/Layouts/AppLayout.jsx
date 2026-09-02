@@ -126,18 +126,18 @@ export default function AppLayout({ children, title }) {
     const submitCleanup = (event) => {
         event.preventDefault();
 
-        cleanupForm
-            .transform((data) => ({
-                password: data.password,
-                confirm: data.confirm ? 1 : 0,
-            }))
-            .post(route('manager.operational-reset'), {
-                preserveScroll: true,
-                onSuccess: () => {
-                    setCleanupOpen(false);
-                    cleanupForm.reset();
-                },
-            });
+        cleanupForm.transform((data) => ({
+            password: data.password,
+            confirm: data.confirm ? 1 : 0,
+        }));
+
+        cleanupForm.post(route('manager.operational-reset'), {
+            preserveScroll: true,
+            onSuccess: () => {
+                setCleanupOpen(false);
+                cleanupForm.reset();
+            },
+        });
     };
 
     const confirmLogout = () => {
@@ -361,6 +361,11 @@ export default function AppLayout({ children, title }) {
                                     {cleanupForm.errors.confirm && (
                                         <p className="text-sm font-medium text-red-600 [data-theme=dark]:text-red-400">
                                             {cleanupForm.errors.confirm}
+                                        </p>
+                                    )}
+                                    {cleanupForm.hasErrors && !cleanupForm.errors.password && !cleanupForm.errors.confirm && (
+                                        <p className="text-sm font-medium text-red-600 [data-theme=dark]:text-red-400">
+                                            Не удалось выполнить очистку. Проверьте пароль и попробуйте снова.
                                         </p>
                                     )}
                                 </div>
