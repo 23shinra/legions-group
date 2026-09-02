@@ -12,6 +12,7 @@ use App\Exports\EmployeeReportExport;
 use App\Exports\EmployeesImportTemplateExport;
 use App\Exports\ObjectReportExport;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Manager\ClearOperationalDataRequest;
 use App\Imports\EmployeesImport;
 use App\Models\AdvanceRequest;
 use App\Models\Brigade;
@@ -25,6 +26,7 @@ use App\Services\EmployeeService;
 use App\Services\ObjectAssignmentService;
 use App\Services\ObjectCloseService;
 use App\Services\ObjectService;
+use App\Services\OperationalResetService;
 use App\Services\PayrollService;
 use App\Services\RealtimeNotifier;
 use App\Services\ReportService;
@@ -883,5 +885,22 @@ final class ManagerController extends Controller
     public function importEmployeesTemplate(): BinaryFileResponse
     {
         return (new EmployeesImportTemplateExport)->download('shablon-sotrudniki.xlsx');
+    }
+
+    public function clearOperationalData(
+        ClearOperationalDataRequest $request,
+        OperationalResetService $reset,
+    ): RedirectResponse {
+        $counts = $reset->clear($request->user());
+
+        return redirect()
+            ->route('manager.dashboard')
+            ->with('success', sprintf(
+                'Данные очищены: выплат %d, авансов %d, смен %d, объектов %d. Сотрудники и бригады сохранены.',
+                $counts['payments'],
+                $counts['advances'],
+                $counts['time_entries'],
+                $counts['objects'],
+            ));
     }
 }

@@ -2,8 +2,9 @@ import BrandLogo from '@/Components/BrandLogo';
 import EnablePushBanner from '@/Components/EnablePushBanner';
 import NotificationBell from '@/Components/NotificationBell';
 import { RealtimeProvider } from '@/contexts/RealtimeContext';
-import { Link, router, usePage } from '@inertiajs/react';
+import { Link, router, useForm, usePage } from '@inertiajs/react';
 import {
+    Broom,
     Buildings,
     Calculator,
     CalendarBlank,
@@ -81,13 +82,18 @@ export default function AppLayout({ children, title }) {
     const links = ROLE_LINKS[role] ?? ROLE_LINKS.worker;
     const [menuOpen, setMenuOpen] = useState(false);
     const [logoutOpen, setLogoutOpen] = useState(false);
+    const [cleanupOpen, setCleanupOpen] = useState(false);
     const [loggingOut, setLoggingOut] = useState(false);
+    const cleanupForm = useForm({
+        password: '',
+        confirm: false,
+    });
 
     useEffect(() => {
-        const locked = menuOpen || logoutOpen;
+        const locked = menuOpen || logoutOpen || cleanupOpen;
         document.body.classList.toggle('menu-locked', locked);
         return () => document.body.classList.remove('menu-locked');
-    }, [menuOpen, logoutOpen]);
+    }, [menuOpen, logoutOpen, cleanupOpen]);
 
     const isActive = (routeName) => {
         try {
@@ -108,6 +114,30 @@ export default function AppLayout({ children, title }) {
     const openLogout = () => {
         setMenuOpen(false);
         setLogoutOpen(true);
+    };
+
+    const openCleanup = () => {
+        setMenuOpen(false);
+        cleanupForm.reset();
+        cleanupForm.clearErrors();
+        setCleanupOpen(true);
+    };
+
+    const submitCleanup = (event) => {
+        event.preventDefault();
+
+        cleanupForm
+            .transform((data) => ({
+                password: data.password,
+                confirm: data.confirm ? 1 : 0,
+            }))
+            .post(route('manager.operational-reset'), {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setCleanupOpen(false);
+                    cleanupForm.reset();
+                },
+            });
     };
 
     const confirmLogout = () => {
@@ -232,6 +262,19 @@ export default function AppLayout({ children, title }) {
                                 </div>
                             </nav>
 
+                            {role === 'manager' ? (
+                                <div className="mt-6">
+                                    <button
+                                        type="button"
+                                        onClick={openCleanup}
+                                        className="flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl border border-red-500/35 bg-red-500/10 px-4 py-3.5 text-base font-semibold text-red-700 transition-fluid active:scale-[0.99] [data-theme=dark]:text-red-300"
+                                    >
+                                        <Broom size={20} weight="light" />
+                                        Очистка
+                                    </button>
+                                </div>
+                            ) : null}
+
                             <div className="mt-auto pt-8">
                                 <button
                                     type="button"
@@ -242,6 +285,108 @@ export default function AppLayout({ children, title }) {
                                     Выйти
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                ) : null}
+
+            {cleanupOpen ? (
+                    <div
+                        className="fixed inset-0 z-50 flex items-end justify-center bg-[var(--overlay)] px-4 pb-[max(1rem,var(--safe-bottom))] backdrop-blur-sm sm:items-center sm:pb-4"
+                        onClick={() => !cleanupForm.processing && setCleanupOpen(false)}
+                    >
+                        <div
+                            className="w-full max-w-sm rounded-[1.75rem] bg-[var(--bezel)] p-1.5 shadow-lift sm:rounded-[2rem]"
+                            onClick={(e) => e.stopPropagation()}
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="cleanup-title"
+                        >
+                            <form
+                                onSubmit={submitCleanup}
+                                className="rounded-[calc(1.75rem-0.375rem)] bg-[var(--surface)] p-5 sm:rounded-[calc(2rem-0.375rem)] sm:p-8"
+                            >
+                                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-full bg-red-500/10 text-red-700 [data-theme=dark]:text-red-300 sm:mb-5 sm:h-12 sm:w-12">
+                                    <Broom size={22} weight="light" />
+                                </div>
+                                <h2
+                                    id="cleanup-title"
+                                    className="text-xl font-extrabold tracking-tight text-[var(--ink)] sm:text-2xl"
+                                >
+                                    Очистить все данные?
+                                </h2>
+                                <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
+                                    Будут удалены все выплаты, авансы, смены, объекты, отчёты и журнал.
+                                    Сотрудники, бригады и текущие ставки сохранятся.
+                                </p>
+
+                                <div className="mt-5 space-y-4">
+                                    <div>
+                                        <label
+                                            htmlFor="cleanup-password"
+                                            className="mb-2 block text-xs font-semibold uppercase tracking-[0.15em] text-[var(--muted)]"
+                                        >
+                                            Ваш пароль
+                                        </label>
+                                        <input
+                                            id="cleanup-password"
+                                            type="password"
+                                            autoComplete="current-password"
+                                            value={cleanupForm.data.password}
+                                            onChange={(e) =>
+                                                cleanupForm.setData('password', e.target.value)
+                                            }
+                                            className="input-soft"
+                                            placeholder="Введите пароль"
+                                        />
+                                        {cleanupForm.errors.password && (
+                                            <p className="mt-2 text-sm font-medium text-red-600 [data-theme=dark]:text-red-400">
+                                                {cleanupForm.errors.password}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <label className="flex items-start gap-3 rounded-2xl bg-[var(--surface-muted)] p-4 ring-1 ring-[var(--bezel-ring)]">
+                                        <input
+                                            type="checkbox"
+                                            checked={cleanupForm.data.confirm}
+                                            onChange={(e) =>
+                                                cleanupForm.setData('confirm', e.target.checked)
+                                            }
+                                            className="mt-1 h-4 w-4 rounded border-[var(--bezel-ring)]"
+                                        />
+                                        <span className="text-sm leading-snug text-[var(--ink)]">
+                                            Понимаю: восстановить удалённые данные будет нельзя
+                                        </span>
+                                    </label>
+                                    {cleanupForm.errors.confirm && (
+                                        <p className="text-sm font-medium text-red-600 [data-theme=dark]:text-red-400">
+                                            {cleanupForm.errors.confirm}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="mt-6 flex flex-col gap-2.5 sm:mt-8 sm:flex-row-reverse sm:gap-3">
+                                    <button
+                                        type="submit"
+                                        disabled={
+                                            cleanupForm.processing ||
+                                            !cleanupForm.data.confirm ||
+                                            !cleanupForm.data.password
+                                        }
+                                        className="min-h-12 flex-1 rounded-full bg-red-600 px-5 py-3 text-base font-semibold text-white transition-fluid hover:opacity-90 active:scale-[0.98] disabled:opacity-60"
+                                    >
+                                        {cleanupForm.processing ? 'Очистка…' : 'Очистить всё'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setCleanupOpen(false)}
+                                        disabled={cleanupForm.processing}
+                                        className="min-h-12 flex-1 rounded-full bg-[var(--surface)] px-5 py-3 text-base font-semibold text-[var(--ink)] ring-1 ring-[var(--bezel-ring)] transition-fluid hover:bg-[var(--surface-muted)] active:scale-[0.98] disabled:opacity-60"
+                                    >
+                                        Отмена
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 ) : null}

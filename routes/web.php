@@ -103,6 +103,8 @@ Route::middleware(['auth'])->group(function (): void {
         Route::get('/reports', [ManagerController::class, 'reports'])->name('reports.index');
         Route::get('/activity', [ActivityLogController::class, 'index'])
             ->name('activity.index');
+        Route::post('/operational-reset', [ManagerController::class, 'clearOperationalData'])
+            ->name('operational-reset');
     });
 
     Route::middleware('role:accountant')->prefix('accountant')->name('accountant.')->group(function (): void {

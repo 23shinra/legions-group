@@ -24,6 +24,7 @@ final class ActivityLog extends Model
         'advance.paid' => 'Аванс выплачен',
         'object.closed' => 'Объект закрыт',
         'payment.created' => 'Выплата зарплаты',
+        'operational.reset' => 'Очистка данных',
     ];
 
     protected $fillable = [
